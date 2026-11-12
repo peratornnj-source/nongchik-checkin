@@ -11,6 +11,29 @@
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <style>
     body { font-family: 'Prompt', sans-serif; background-color: #f8fafc; }
+    /* Smooth collapsible header transitions on mobile */
+    .collapsible-part {
+      max-height: 120px;
+      opacity: 1;
+      overflow: hidden;
+      transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease, padding 0.3s ease, margin 0.3s ease;
+    }
+    @media (max-width: 639px) {
+      #main-header.header-compact .collapsible-part {
+        max-height: 0 !important;
+        opacity: 0 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        border-width: 0 !important;
+      }
+      #main-header.header-compact #header-inner {
+        padding-top: 0.45rem;
+        padding-bottom: 0.45rem;
+        gap: 0;
+      }
+    }
     @media print {
       body * { visibility: hidden; }
       #printable-ticket, #printable-ticket * { visibility: visible; }
@@ -21,26 +44,29 @@
 <body class="text-slate-800 antialiased min-h-screen flex flex-col">
 
   <!-- Navbar -->
-  <header class="bg-slate-900 text-white shadow-md sticky top-0 z-40">
-    <!-- แถบแสดงเครดิตผู้พัฒนาด้านบนสุด -->
-    <div class="bg-slate-950/80 border-b border-slate-800 px-4 py-1.5 text-center">
+  <header id="main-header" class="bg-slate-900 text-white shadow-md sticky top-0 z-40 transition-all duration-300">
+    <!-- แถบแสดงเครดิตผู้พัฒนาด้านบนสุด (ย่อยุบอัตโนมัติบนมือถือเมื่อเลื่อนลง) -->
+    <div class="collapsible-part bg-slate-950/80 border-b border-slate-800 px-4 py-1.5 text-center">
       <p class="text-[11px] sm:text-xs text-slate-300 tracking-wide">
         พัฒนาโดย <span class="text-emerald-400 font-medium">พีรธรน์ จันทร์ทิตย์</span> นักวิชาการคอมพิวเตอร์ชำนาญการ รพ.หนองจิก
       </p>
     </div>
 
-    <div class="max-w-5xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
-      <div class="flex items-center gap-2.5">
-        <div class="w-9 h-9 rounded-lg bg-emerald-500 flex items-center justify-center font-bold text-slate-900 text-lg">QR</div>
+    <div id="header-inner" class="max-w-5xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3 transition-all duration-300">
+      <!-- ส่วนโลโก้และสถานะการเชื่อมต่อ (ย่อยุบอัตโนมัติบนมือถือเมื่อเลื่อนลง) -->
+      <div class="collapsible-part flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-lg bg-emerald-500 flex items-center justify-center font-bold text-slate-900 text-lg shrink-0">QR</div>
         <div>
           <span class="font-semibold text-base tracking-wide block leading-tight">EventPass Cloud</span>
           <span id="connection-status" class="text-[11px] text-amber-400 flex items-center gap-1">● กำลังเชื่อมต่อฐานข้อมูล...</span>
         </div>
       </div>
-      <nav class="flex gap-1.5 bg-slate-800 p-1 rounded-xl">
-        <button onclick="switchTab('register')" id="tab-btn-register" class="tab-btn px-3.5 py-1.5 rounded-lg text-sm font-medium bg-emerald-500 text-slate-950 transition">ลงทะเบียน</button>
-        <button onclick="switchTab('checkin')" id="tab-btn-checkin" class="tab-btn px-3.5 py-1.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white transition">สแกนเช็กอิน</button>
-        <button onclick="switchTab('admin')" id="tab-btn-admin" class="tab-btn px-3.5 py-1.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white transition">ผู้ดูแลระบบ</button>
+
+      <!-- แถบปุ่มเมนูหลัก (คงอยู่ด้านบนตลอดเวลาเพื่อสลับแท็บได้ทันที) -->
+      <nav class="flex w-full sm:w-auto justify-between sm:justify-start gap-1.5 bg-slate-800 p-1 rounded-xl">
+        <button onclick="switchTab('register')" id="tab-btn-register" class="tab-btn flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-sm font-medium bg-emerald-500 text-slate-950 transition">ลงทะเบียน</button>
+        <button onclick="switchTab('checkin')" id="tab-btn-checkin" class="tab-btn flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white transition">สแกนเช็กอิน</button>
+        <button onclick="switchTab('admin')" id="tab-btn-admin" class="tab-btn flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white transition">ผู้ดูแลระบบ</button>
       </nav>
     </div>
   </header>
@@ -98,455 +124,4 @@
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">เบอร์โทรศัพท์ <span class="text-red-500">*</span></label>
-              <input type="tel" id="reg-phone" required placeholder="08XXXXXXXX" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none" />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">อีเมล</label>
-              <input type="email" id="reg-email" placeholder="example@domain.com" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none" />
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1">รูปแบบการเข้าร่วม</label>
-            <select id="reg-type" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none bg-white">
-              <option value="Onsite (เข้าร่วม ณ สถานที่จัดงาน)">Onsite (เข้าร่วม ณ สถานที่จัดงาน)</option>
-              <option value="Online (เข้าร่วมผ่านระบบออนไลน์)">Online (เข้าร่วมผ่านระบบออนไลน์)</option>
-            </select>
-          </div>
-
-          <div class="pt-2">
-            <button type="submit" id="btn-submit-reg" class="w-full py-3 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed">
-              ยืนยันการลงทะเบียนและสร้าง QR Code
-            </button>
-          </div>
-        </form>
-      </div>
-
-      <!-- E-Ticket Result Card -->
-      <div id="ticket-result-card" class="hidden space-y-4">
-        <div id="printable-ticket" class="max-w-md mx-auto bg-white rounded-3xl shadow-lg border border-slate-200 overflow-hidden">
-          <div class="bg-slate-900 text-white p-5 text-center">
-            <span class="text-xs uppercase tracking-widest text-emerald-400 font-semibold">E-TICKET / บัตรเข้าร่วมงาน</span>
-            <h3 id="ticket-event-title" class="font-bold text-lg mt-1 leading-snug"></h3>
-          </div>
-          <div class="p-6 flex flex-col items-center text-center space-y-4">
-            <div id="qrcode-container" class="p-3 bg-white border-2 border-slate-100 rounded-2xl shadow-inner"></div>
-            <div>
-              <p class="text-xs text-slate-400">รหัสผู้เข้าร่วม (Ticket ID)</p>
-              <p id="ticket-id" class="font-mono font-bold text-lg text-emerald-700 tracking-wider"></p>
-            </div>
-            <div class="w-full border-t border-dashed border-slate-200 pt-4 text-left space-y-2 text-sm">
-              <div class="flex justify-between"><span class="text-slate-500">ชื่อ-นามสกุล:</span><span id="ticket-name" class="font-semibold text-slate-800"></span></div>
-              <div class="flex justify-between"><span class="text-slate-500">หน่วยงาน:</span><span id="ticket-org" class="font-medium text-slate-800"></span></div>
-              <div class="flex justify-between"><span class="text-slate-500">ประเภท:</span><span id="ticket-type" class="font-medium text-slate-800"></span></div>
-              <div class="flex justify-between"><span class="text-slate-500">วัน-เวลา:</span><span id="ticket-date" class="font-medium text-slate-800"></span></div>
-            </div>
-          </div>
-          <div class="bg-slate-50 px-6 py-3 text-center text-xs text-slate-500 border-t border-slate-100">
-            กรุณาแสดง QR Code นี้ต่อเจ้าหน้าที่บริเวณจุดลงทะเบียนหน้างาน
-          </div>
-        </div>
-
-        <div class="max-w-md mx-auto flex flex-wrap gap-3 justify-center">
-          <button onclick="downloadTicketImage()" class="flex-1 py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium transition">
-            📥 บันทึกรูป QR Code
-          </button>
-          <button onclick="window.print()" class="py-2.5 px-4 rounded-xl bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-medium transition">
-            🖨️ พิมพ์บัตร
-          </button>
-          <button onclick="resetRegistrationView()" class="w-full py-2 text-sm text-slate-500 hover:text-slate-800">
-            + ลงทะเบียนให้บุคคลอื่นเพิ่มเติม
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <!-- ==================== TAB 2: สแกนเช็กอินหน้างาน ==================== -->
-    <section id="view-checkin" class="hidden space-y-6">
-      <!-- Real-time Stats -->
-      <div class="grid grid-cols-3 gap-4">
-        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm text-center">
-          <p class="text-xs text-slate-500">ลงทะเบียนทั้งหมด</p>
-          <p id="stat-total" class="text-2xl font-bold text-slate-800 mt-1">0</p>
-        </div>
-        <div class="bg-emerald-50 p-4 rounded-2xl border border-emerald-200 shadow-sm text-center">
-          <p class="text-xs text-emerald-700">เช็กอินเข้างานแล้ว</p>
-          <p id="stat-checked" class="text-2xl font-bold text-emerald-700 mt-1">0</p>
-        </div>
-        <div class="bg-amber-50 p-4 rounded-2xl border border-amber-200 shadow-sm text-center">
-          <p class="text-xs text-amber-700">ยังไม่มารายงานตัว</p>
-          <p id="stat-pending" class="text-2xl font-bold text-amber-700 mt-1">0</p>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- Camera Scanner -->
-        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-          <div class="flex items-center justify-between">
-            <h2 class="font-bold text-lg text-slate-800">📷 สแกน QR Code หน้างาน</h2>
-            <button id="btn-toggle-camera" onclick="toggleCamera()" class="px-4 py-1.5 rounded-xl text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition">
-              เปิดกล้องสแกน
-            </button>
-          </div>
-          <div id="qr-reader" class="w-full rounded-xl overflow-hidden bg-slate-100 min-h-[260px] flex items-center justify-center text-sm text-slate-400">
-            กดปุ่ม "เปิดกล้องสแกน" เพื่อเริ่มใช้งาน
-          </div>
-          <div id="scan-feedback" class="hidden p-4 rounded-xl border text-sm"></div>
-        </div>
-
-        <!-- Manual Search & Check-in -->
-        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-          <h2 class="font-bold text-lg text-slate-800">⌨️ ค้นหาชื่อ / กรอกรหัสเช็กอิน</h2>
-          <input type="text" id="manual-search-input" oninput="renderCheckinList()" placeholder="พิมพ์ชื่อ-นามสกุล, หน่วยงาน หรือรหัส REG-..." class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm" />
-          <div id="checkin-attendee-list" class="max-h-[340px] overflow-y-auto divide-y divide-slate-100"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ==================== TAB 3: ผู้ดูแลระบบ (ADMIN) ==================== -->
-    <section id="view-admin" class="hidden space-y-6">
-      <!-- Login Box -->
-      <div id="admin-login-box" class="max-w-md mx-auto bg-white p-8 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-        <h2 class="text-xl font-bold text-slate-800">🔐 เข้าสู่ระบบผู้ดูแล (Admin)</h2>
-        <p class="text-sm text-slate-500">กรอกรหัสผ่านเพื่อแก้ไขรายละเอียดโครงการและจัดการรายชื่อ</p>
-        <div class="relative">
-          <input type="password" id="admin-pass-input" onkeydown="if(event.key==='Enter') loginAdmin()" placeholder="รหัสผ่านผู้ดูแลระบบ" class="w-full px-4 py-2.5 pr-11 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 outline-none" />
-          <button type="button" onclick="toggleAdminPassword()" aria-label="แสดงหรือซ่อนรหัสผ่าน" class="absolute inset-y-0 right-0 px-3.5 flex items-center text-slate-400 hover:text-slate-700 transition">
-            <svg id="eye-icon-open" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="w-5 h-5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-            </svg>
-            <svg id="eye-icon-closed" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="w-5 h-5 hidden">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />
-            </svg>
-          </button>
-        </div>
-        <button onclick="loginAdmin()" class="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold transition">เข้าสู่ระบบ</button>
-      </div>
-
-      <!-- Admin Dashboard -->
-      <div id="admin-dashboard" class="hidden space-y-6">
-        <!-- Event Settings Form -->
-        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h2 class="text-lg font-bold text-slate-800">⚙️ ตั้งค่ารายละเอียดโครงการ (อัปเดตขึ้น Cloud ทันที)</h2>
-            <button onclick="logoutAdmin()" class="text-xs text-red-600 hover:underline">ออกจากระบบ</button>
-          </div>
-
-          <form onsubmit="saveEventConfig(event)" class="space-y-4">
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">ชื่อโครงการ / หัวข้อการประชุมสัมมนา</label>
-              <input type="text" id="cfg-title" required class="w-full px-4 py-2 rounded-xl border border-slate-300" />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">รายละเอียดและวัตถุประสงค์</label>
-              <textarea id="cfg-desc" rows="3" class="w-full px-4 py-2 rounded-xl border border-slate-300"></textarea>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">วันและเวลาจัดงาน</label>
-                <input type="text" id="cfg-date" required class="w-full px-4 py-2 rounded-xl border border-slate-300" />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">สถานที่จัดงาน / ลิงก์ประชุม</label>
-                <input type="text" id="cfg-location" required class="w-full px-4 py-2 rounded-xl border border-slate-300" />
-              </div>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">จำนวนที่นั่งสูงสุด (โควตา)</label>
-                <input type="number" id="cfg-quota" min="1" required class="w-full px-4 py-2 rounded-xl border border-slate-300" />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">สถานะการรับสมัคร</label>
-                <select id="cfg-status" class="w-full px-4 py-2 rounded-xl border border-slate-300 bg-white">
-                  <option value="open">เปิดรับสมัคร (Open)</option>
-                  <option value="closed">ปิดรับสมัคร (Closed)</option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">เปลี่ยนรหัสผ่าน Admin</label>
-                <input type="text" id="cfg-password" required class="w-full px-4 py-2 rounded-xl border border-slate-300" />
-              </div>
-            </div>
-            <button type="submit" id="btn-save-cfg" class="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition">
-              💾 บันทึกการตั้งค่าโครงการ
-            </button>
-          </form>
-        </div>
-
-        <!-- Attendees Table & Export -->
-        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-          <div class="flex flex-wrap items-center justify-between gap-3">
-            <h2 class="text-lg font-bold text-slate-800">📋 รายชื่อผู้ลงทะเบียนทั้งหมด (<span id="admin-reg-count">0</span> คน)</h2>
-            <button onclick="exportCSV()" class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium transition">
-              📊 ดาวน์โหลดไฟล์ Excel (CSV)
-            </button>
-          </div>
-          <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse text-sm">
-              <thead>
-                <tr class="border-b border-slate-200 text-slate-500">
-                  <th class="py-3 px-2">รหัส</th>
-                  <th class="py-3 px-2">ชื่อ-นามสกุล</th>
-                  <th class="py-3 px-2">หน่วยงาน</th>
-                  <th class="py-3 px-2">เบอร์โทร</th>
-                  <th class="py-3 px-2">สถานะเช็กอิน</th>
-                  <th class="py-3 px-2 text-right">จัดการ</th>
-                </tr>
-              </thead>
-              <tbody id="admin-table-body" class="divide-y divide-slate-100"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <!-- Lookup Modal -->
-  <div id="lookup-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl">
-      <div class="flex justify-between items-center">
-        <h3 class="font-bold text-lg">ค้นหาบัตรเข้างานเดิม</h3>
-        <button onclick="toggleLookupModal(false)" class="text-slate-400 hover:text-slate-700 text-xl">&times;</button>
-      </div>
-      <p class="text-sm text-slate-500">กรอกเบอร์โทรศัพท์ หรือ ชื่อ-นามสกุล ที่ใช้ลงทะเบียน</p>
-      <input type="text" id="lookup-query" placeholder="เช่น 0812345678 หรือ สมชาย" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 outline-none" />
-      <button onclick="searchExistingTicket()" class="w-full py-2.5 rounded-xl bg-emerald-600 text-white font-semibold">ค้นหาบัตร</button>
-      <div id="lookup-results" class="space-y-2 max-h-60 overflow-y-auto"></div>
-    </div>
-  </div>
-
-  <!-- ==================== FIREBASE SDK & APP LOGIC ==================== -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-    import {
-      getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc,
-      collection, onSnapshot, query, orderBy, serverTimestamp
-    } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyAg1071omVVN8p5l9_Q3MO-7NMnaOiYzvU",
-      authDomain: "seminar-checkin-fa81b.firebaseapp.com",
-      projectId: "seminar-checkin-fa81b",
-      storageBucket: "seminar-checkin-fa81b.firebasestorage.app",
-      messagingSenderId: "1052898126747",
-      appId: "1:1052898126747:web:5881acf1f0c58b41becf3e",
-      measurementId: "G-HYMDEPTXD6"
-    };
-
-    // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    // State
-    let eventConfig = {
-      title: "โครงการอบรมเชิงปฏิบัติการพัฒนาศักยภาพบุคลากร ประจำปี 2569",
-      desc: "เรียนรู้แนวทางการประยุกต์ใช้เทคโนโลยีดิจิทัลและ AI เพื่อยกระดับประสิทธิภาพการทำงานในองค์กร",
-      date: "15 ธันวาคม 2569 เวลา 08:30 - 16:30 น.",
-      location: "ห้องประชุมใหญ่ ชั้น 3 อาคารอำนวยการ",
-      quota: 100,
-      status: "open",
-      password: "admin1234"
-    };
-    let registrations = [];
-    let isAdminLoggedIn = false;
-    let html5QrCode = null;
-    let isCameraRunning = false;
-
-    const configDocRef = doc(db, "config", "event_details");
-    const regCollectionRef = collection(db, "registrations");
-
-    // Real-time Listener: Event Config
-    onSnapshot(configDocRef, async (docSnap) => {
-      document.getElementById("connection-status").innerHTML = "● เชื่อมต่อ Cloud Real-time แล้ว";
-      document.getElementById("connection-status").className = "text-[11px] text-emerald-400 flex items-center gap-1";
-
-      if (docSnap.exists()) {
-        eventConfig = { ...eventConfig, ...docSnap.data() };
-      } else {
-        await setDoc(configDocRef, eventConfig);
-      }
-      updateEventUI();
-    }, (error) => {
-      document.getElementById("connection-status").innerHTML = "● ยังไม่ได้ตั้งค่า Firebase Config";
-      document.getElementById("connection-status").className = "text-[11px] text-red-400 flex items-center gap-1";
-      console.error("Firebase Error:", error);
-    });
-
-    // Real-time Listener: Registrations
-    const regQuery = query(regCollectionRef, orderBy("createdAt", "desc"));
-    onSnapshot(regQuery, (snapshot) => {
-      registrations = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-      updateEventUI();
-      renderCheckinList();
-      renderAdminTable();
-    });
-
-    // Update UI Functions
-    function updateEventUI() {
-      document.getElementById("display-title").textContent = eventConfig.title;
-      document.getElementById("display-desc").textContent = eventConfig.desc;
-      document.getElementById("display-date").textContent = eventConfig.date;
-      document.getElementById("display-location").textContent = eventConfig.location;
-
-      const remaining = Math.max(0, Number(eventConfig.quota) - registrations.length);
-      document.getElementById("badge-quota").textContent = `ที่นั่งคงเหลือ: ${remaining} / ${eventConfig.quota}`;
-
-      const badgeStatus = document.getElementById("badge-status");
-      const submitBtn = document.getElementById("btn-submit-reg");
-
-      if (eventConfig.status === "closed") {
-        badgeStatus.textContent = "ปิดรับสมัครแล้ว";
-        badgeStatus.className = "px-3 py-1 rounded-full text-xs font-semibold bg-red-500/20 text-red-300 border border-red-400/30";
-        submitBtn.disabled = true;
-        submitBtn.textContent = "ปิดรับสมัครชั่วคราว";
-      } else if (remaining <= 0) {
-        badgeStatus.textContent = "ที่นั่งเต็มแล้ว";
-        badgeStatus.className = "px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-400/30";
-        submitBtn.disabled = true;
-        submitBtn.textContent = "ขออภัย ที่นั่งเต็มจำนวนแล้ว";
-      } else {
-        badgeStatus.textContent = "เปิดรับสมัคร";
-        badgeStatus.className = "px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30";
-        submitBtn.disabled = false;
-        submitBtn.textContent = "ยืนยันการลงทะเบียนและสร้าง QR Code";
-      }
-
-      // Update Stats
-      const checkedCount = registrations.filter(r => r.checkedIn).length;
-      document.getElementById("stat-total").textContent = registrations.length;
-      document.getElementById("stat-checked").textContent = checkedCount;
-      document.getElementById("stat-pending").textContent = registrations.length - checkedCount;
-      document.getElementById("admin-reg-count").textContent = registrations.length;
-
-      // Fill Admin Form if not currently editing
-      if (document.activeElement?.tagName !== "INPUT" && document.activeElement?.tagName !== "TEXTAREA") {
-        document.getElementById("cfg-title").value = eventConfig.title;
-        document.getElementById("cfg-desc").value = eventConfig.desc;
-        document.getElementById("cfg-date").value = eventConfig.date;
-        document.getElementById("cfg-location").value = eventConfig.location;
-        document.getElementById("cfg-quota").value = eventConfig.quota;
-        document.getElementById("cfg-status").value = eventConfig.status;
-        document.getElementById("cfg-password").value = eventConfig.password;
-      }
-    }
-
-    // Handle Registration Submit
-    window.handleRegister = async function(e) {
-      e.preventDefault();
-      const btn = document.getElementById("btn-submit-reg");
-      btn.disabled = true;
-      btn.textContent = "กำลังบันทึกข้อมูล...";
-
-      const name = document.getElementById("reg-name").value.trim();
-      const org = document.getElementById("reg-org").value.trim();
-      const phone = document.getElementById("reg-phone").value.trim();
-      const email = document.getElementById("reg-email").value.trim();
-      const type = document.getElementById("reg-type").value;
-
-      const duplicate = registrations.find(r => r.phone === phone || r.name === name);
-      if (duplicate) {
-        alert("พบข้อมูลการลงทะเบียนของท่านในระบบแล้ว ระบบจะแสดงบัตรเข้างานเดิมให้ทันที");
-        showTicket(duplicate);
-        btn.disabled = false;
-        return;
-      }
-
-      const ticketId = "REG-" + Math.random().toString(36).substring(2, 8).toUpperCase();
-      const newReg = {
-        id: ticketId,
-        name, org, phone, email, type,
-        checkedIn: false,
-        checkedInAt: null,
-        createdAt: serverTimestamp(),
-        registeredDateText: new Date().toLocaleString("th-TH")
-      };
-
-      try {
-        await setDoc(doc(db, "registrations", ticketId), newReg);
-        document.getElementById("reg-form").reset();
-        showTicket(newReg);
-      } catch (err) {
-        alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล: " + err.message);
-      } finally {
-        btn.disabled = false;
-      }
-    };
-
-    // Display E-Ticket & QR
-    window.showTicket = function(reg) {
-      document.getElementById("register-form-card").classList.add("hidden");
-      document.getElementById("ticket-result-card").classList.remove("hidden");
-
-      document.getElementById("ticket-event-title").textContent = eventConfig.title;
-      document.getElementById("ticket-id").textContent = reg.id;
-      document.getElementById("ticket-name").textContent = reg.name;
-      document.getElementById("ticket-org").textContent = reg.org;
-      document.getElementById("ticket-type").textContent = reg.type;
-      document.getElementById("ticket-date").textContent = eventConfig.date;
-
-      const qrContainer = document.getElementById("qrcode-container");
-      qrContainer.innerHTML = "";
-      new QRCode(qrContainer, {
-        text: reg.id,
-        width: 180,
-        height: 180,
-        colorDark: "#0f172a",
-        colorLight: "#ffffff",
-        correctLevel: QRCode.CorrectLevel.H
-      });
-    };
-
-    window.resetRegistrationView = function() {
-      document.getElementById("ticket-result-card").classList.add("hidden");
-      document.getElementById("register-form-card").classList.remove("hidden");
-    };
-
-    window.downloadTicketImage = function() {
-      const canvas = document.querySelector("#qrcode-container canvas");
-      if (!canvas) return;
-      const link = document.createElement("a");
-      link.download = document.getElementById("ticket-id").textContent + ".png";
-      link.href = canvas.toDataURL("image/png");
-      link.click();
-    };
-
-    // Lookup Modal
-    window.toggleLookupModal = function(show) {
-      document.getElementById("lookup-modal").classList.toggle("hidden", !show);
-      if (show) {
-        document.getElementById("lookup-query").value = "";
-        document.getElementById("lookup-results").innerHTML = "";
-      }
-    };
-
-    window.searchExistingTicket = function() {
-      const q = document.getElementById("lookup-query").value.trim().toLowerCase();
-      const resDiv = document.getElementById("lookup-results");
-      if (!q) return;
-
-      const matches = registrations.filter(r =>
-        r.name.toLowerCase().includes(q) || r.phone.includes(q) || r.id.toLowerCase().includes(q)
-      );
-
-      if (matches.length === 0) {
-        resDiv.innerHTML = `<p class="text-sm text-red-500 text-center py-4">ไม่พบข้อมูลผู้ลงทะเบียน</p>`;
-        return;
-      }
-
-      resDiv.innerHTML = matches.map(r => `
-        <div class="p-3 border border-slate-200 rounded-xl flex justify-between items-center">
-          <div>
-            <p class="font-semibold text-sm">${r.name}</p>
-            <p class="text-xs text-slate-500">${r.org} (${r.id})</p>
-          </div>
-          <button onclick='selectLookupTicket("${r.id}")' class="px-3 py-1.5 bg-emerald-600 text-white text-xs rounded-lg font-medium">เปิดบัตร</button>
-        </div>
-      `).join("");
-    };
-
-    window.selectLookupTicket = function(id) {
-      const reg = registrations.find(r => r.id === id);
-      if (reg) {
+              <label class="block text-sm font-medium text-slate-
