@@ -57,19 +57,11 @@
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
       }
-      body.print-mode-cert #cert-modal {
-        display: block !important;
-        position: static !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        border: none !important;
-        background: transparent !important;
-        box-shadow: none !important;
-        overflow: visible !important;
-        inset: auto !important;
-      }
-      body.print-mode-cert #cert-preview-canvas {
+      body.print-mode-cert #printable-cert,
+      body.print-mode-cert #printable-cert * {
         visibility: visible !important;
+      }
+      body.print-mode-cert #printable-cert {
         display: block !important;
         position: fixed !important;
         left: 0 !important;
@@ -81,16 +73,27 @@
         margin: 0 !important;
         padding: 0 !important;
         border: none !important;
-        box-shadow: none !important;
+        background: #ffffff !important;
         box-sizing: border-box !important;
-        object-fit: fill !important;
-        z-index: 9999999 !important;
+        z-index: 99999999 !important;
         page-break-before: avoid !important;
         page-break-after: avoid !important;
         page-break-inside: avoid !important;
         break-before: avoid !important;
         break-after: avoid !important;
         break-inside: avoid !important;
+      }
+      body.print-mode-cert #printable-cert-img {
+        display: block !important;
+        width: 297mm !important;
+        height: 210mm !important;
+        max-width: 297mm !important;
+        max-height: 210mm !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+        object-fit: fill !important;
       }
     }
   </style>
@@ -674,6 +677,11 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- Printable Container for Certificate (A4 Landscape) -->
+  <div id="printable-cert" class="hidden">
+    <img id="printable-cert-img" alt="Certificate" />
   </div>
 
   <!-- Printable Hidden Container for Name Badge (ป้ายคล้องคอ 9x13 cm) -->
@@ -1652,14 +1660,14 @@
             size: A4 landscape;
             margin: 0mm;
           }
-          html, body {
-            width: 297mm !important;
-            height: 210mm !important;
-            max-width: 297mm !important;
-            max-height: 210mm !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            overflow: hidden !important;
+          @media print {
+            html, body {
+              width: 297mm !important;
+              height: 210mm !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              overflow: hidden !important;
+            }
           }
         `;
       } else {
@@ -1668,12 +1676,14 @@
             size: A4 portrait;
             margin: 10mm;
           }
-          html, body {
-            width: 100% !important;
-            height: auto !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            overflow: visible !important;
+          @media print {
+            html, body {
+              width: 100% !important;
+              height: auto !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              overflow: visible !important;
+            }
           }
         `;
       }
@@ -1694,6 +1704,11 @@
     window.addEventListener("beforeprint", () => {
       const certModal = document.getElementById("cert-modal");
       if (certModal && !certModal.classList.contains("hidden")) {
+        const canvas = document.getElementById("cert-preview-canvas");
+        const certImg = document.getElementById("printable-cert-img");
+        if (canvas && certImg) {
+          certImg.src = canvas.toDataURL("image/png");
+        }
         setPrintPageOrientation("landscape");
         document.body.classList.remove("print-mode-ticket", "print-mode-badge");
         document.body.classList.add("print-mode-cert");
@@ -1722,6 +1737,11 @@
 
       currentCertAttendee = reg;
       renderCertificateCanvas(reg);
+      const canvas = document.getElementById("cert-preview-canvas");
+      const certImg = document.getElementById("printable-cert-img");
+      if (canvas && certImg) {
+        certImg.src = canvas.toDataURL("image/png");
+      }
       document.getElementById("cert-modal").classList.remove("hidden");
     };
 
@@ -1839,13 +1859,18 @@
 
     window.printCert = function() {
       if (!currentCertAttendee) return;
+      renderCertificateCanvas(currentCertAttendee);
+      const canvas = document.getElementById("cert-preview-canvas");
+      const certImg = document.getElementById("printable-cert-img");
+      if (canvas && certImg) {
+        certImg.src = canvas.toDataURL("image/png");
+      }
       setPrintPageOrientation("landscape");
       document.body.classList.remove("print-mode-ticket", "print-mode-badge");
       document.body.classList.add("print-mode-cert");
-      renderCertificateCanvas(currentCertAttendee);
       setTimeout(() => {
         window.print();
-      }, 150);
+      }, 200);
     };
 
     // ---------------- CSV Export ----------------
