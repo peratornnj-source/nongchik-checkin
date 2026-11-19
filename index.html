@@ -9,6 +9,10 @@
   <!-- QR Code Generator & Scanner -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <!-- Chart.js for Admin Analytics Dashboard -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Canvas Confetti for Celebrations -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
   <style>
     body { font-family: 'Prompt', sans-serif; background-color: #f8fafc; }
     .collapsible-part {
@@ -33,10 +37,61 @@
         gap: 0;
       }
     }
+    /* Print Styles */
     @media print {
       body * { visibility: hidden; }
-      #printable-ticket, #printable-ticket * { visibility: visible; }
-      #printable-ticket { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none !important; border: 2px solid #cbd5e1 !important; }
+
+      /* Ticket Print (Portrait) */
+      body.print-mode-ticket #printable-ticket, body.print-mode-ticket #printable-ticket * { visibility: visible; }
+      body.print-mode-ticket #printable-ticket { position: absolute; left: 0; top: 0; width: 100%; max-width: 100%; box-shadow: none !important; border: 2px solid #cbd5e1 !important; }
+
+      /* Nametag / Badge Print (Portrait) */
+      body.print-mode-badge #printable-badge, body.print-mode-badge #printable-badge * { visibility: visible; }
+      body.print-mode-badge #printable-badge { position: absolute; left: 50%; top: 20px; transform: translateX(-50%); width: 90mm; min-height: 125mm; box-shadow: none !important; border: 2px dashed #94a3b8 !important; }
+
+      /* Certificate A4 Landscape Print (แนวนอน ขนาด A4 พอดีขอบกระดาษ ไม่ล้น ไม่เกิน) */
+      body.print-mode-cert {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      body.print-mode-cert #cert-modal {
+        display: block !important;
+        position: static !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        overflow: visible !important;
+        inset: auto !important;
+      }
+      body.print-mode-cert #cert-preview-canvas {
+        visibility: visible !important;
+        display: block !important;
+        position: fixed !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 297mm !important;
+        height: 210mm !important;
+        max-width: 297mm !important;
+        max-height: 210mm !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+        box-sizing: border-box !important;
+        object-fit: fill !important;
+        z-index: 9999999 !important;
+        page-break-before: avoid !important;
+        page-break-after: avoid !important;
+        page-break-inside: avoid !important;
+        break-before: avoid !important;
+        break-after: avoid !important;
+        break-inside: avoid !important;
+      }
     }
   </style>
 </head>
@@ -51,7 +106,7 @@
       </p>
     </div>
 
-    <div id="header-inner" class="max-w-5xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3 transition-all duration-300">
+    <div id="header-inner" class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3 transition-all duration-300">
       <div class="collapsible-part flex items-center gap-2.5">
         <div class="w-9 h-9 rounded-lg bg-emerald-500 flex items-center justify-center font-bold text-slate-900 text-lg shrink-0">QR</div>
         <div>
@@ -69,7 +124,7 @@
   </header>
 
   <!-- Main Content -->
-  <main class="flex-1 max-w-5xl w-full mx-auto px-4 py-6">
+  <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-6">
 
     <!-- ==================== TAB 1: ลงทะเบียน ==================== -->
     <section id="view-register" class="space-y-6">
@@ -94,9 +149,10 @@
         </div>
       </div>
 
-      <div class="flex justify-end">
-        <button onclick="toggleLookupModal(true)" class="text-sm font-medium text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-4 py-2 rounded-xl border border-emerald-200 transition">
-          🔍 ค้นหาบัตรเข้างาน / QR Code เดิม
+      <div class="flex flex-wrap justify-between items-center gap-3">
+        <p class="text-xs text-slate-500">✨ กรอกข้อมูลเพื่อรับ E-Ticket QR Code สำหรับเข้างาน</p>
+        <button onclick="toggleLookupModal(true)" class="text-sm font-medium text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-4 py-2 rounded-xl border border-emerald-200 transition flex items-center gap-1.5">
+          <span>🔍</span> ค้นหาบัตรเข้างาน / QR Code เดิม
         </button>
       </div>
 
@@ -137,7 +193,7 @@
 
           <div class="pt-2">
             <button type="submit" id="btn-submit-reg" class="w-full py-3 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed">
-              ยืนยันการลงทะเบียนและสร้าง QR Code
+              ยืนยันการลงทะเบียนและรับ QR Code
             </button>
           </div>
         </form>
@@ -146,12 +202,15 @@
       <!-- E-Ticket Result Card -->
       <div id="ticket-result-card" class="hidden space-y-4">
         <div id="printable-ticket" class="max-w-md mx-auto bg-white rounded-3xl shadow-lg border border-slate-200 overflow-hidden">
-          <div class="bg-slate-900 text-white p-5 text-center">
+          <div class="bg-slate-900 text-white p-5 text-center relative">
             <span class="text-xs uppercase tracking-widest text-emerald-400 font-semibold">E-TICKET / บัตรเข้าร่วมงาน</span>
             <h3 id="ticket-event-title" class="font-bold text-lg mt-1 leading-snug"></h3>
+            <span id="ticket-checkin-badge" class="mt-2 inline-block px-3 py-0.5 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-400/30">
+              รอเช็กอินหน้างาน
+            </span>
           </div>
           <div class="p-6 flex flex-col items-center text-center space-y-4">
-            <div id="qrcode-container" class="p-3 bg-white border-2 border-slate-100 rounded-2xl shadow-inner"></div>
+            <div id="qrcode-container" class="p-3 bg-white border-2 border-slate-100 rounded-2xl shadow-inner flex items-center justify-center"></div>
             <div>
               <p class="text-xs text-slate-400">รหัสผู้เข้าร่วม (Ticket ID)</p>
               <p id="ticket-id" class="font-mono font-bold text-lg text-emerald-700 tracking-wider"></p>
@@ -168,14 +227,30 @@
           </div>
         </div>
 
-        <div class="max-w-md mx-auto flex flex-wrap gap-3 justify-center">
-          <button onclick="downloadTicketImage()" class="flex-1 py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium transition">
-            📥 บันทึกรูป QR Code
+        <!-- Action Buttons for E-Ticket -->
+        <div class="max-w-md mx-auto grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <button onclick="downloadTicketImage()" class="py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-medium transition flex items-center justify-center gap-1.5">
+            <span>📥</span> บันทึกรูป QR
           </button>
-          <button onclick="window.print()" class="py-2.5 px-4 rounded-xl bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-medium transition">
-            🖨️ พิมพ์บัตร
+          <button onclick="printTicket()" class="py-2.5 px-3 rounded-xl bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-medium transition flex items-center justify-center gap-1.5">
+            <span>🖨️</span> พิมพ์บัตร
           </button>
-          <button onclick="resetRegistrationView()" class="w-full py-2 text-sm text-slate-500 hover:text-slate-800">
+          <button onclick="printNametagCurrent()" class="py-2.5 px-3 rounded-xl bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-medium transition flex items-center justify-center gap-1.5">
+            <span>🏷️</span> ป้ายคล้องคอ
+          </button>
+          <button onclick="shareViaLine()" class="py-2.5 px-3 rounded-xl bg-[#06C755] hover:bg-[#05b34c] text-white text-xs sm:text-sm font-medium transition flex items-center justify-center gap-1.5">
+            <span>💬</span> ส่งเข้า LINE
+          </button>
+          <button onclick="copyTicketLink()" class="py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-medium transition flex items-center justify-center gap-1.5">
+            <span>🔗</span> ก๊อปลิงก์บัตร
+          </button>
+          <button id="btn-ticket-cert" onclick="openCertificateModal(currentActiveTicket)" class="py-2.5 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs sm:text-sm font-medium transition flex items-center justify-center gap-1.5">
+            <span>🎓</span> เกียรติบัตร
+          </button>
+        </div>
+
+        <div class="max-w-md mx-auto text-center pt-2">
+          <button onclick="resetRegistrationView()" class="text-sm text-slate-500 hover:text-emerald-700 font-medium">
             + ลงทะเบียนให้บุคคลอื่นเพิ่มเติม
           </button>
         </div>
@@ -184,7 +259,8 @@
 
     <!-- ==================== TAB 2: สแกนเช็กอินหน้างาน ==================== -->
     <section id="view-checkin" class="hidden space-y-6">
-      <div class="grid grid-cols-3 gap-4">
+      <!-- สถิติรายงานตัวด่วน -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm text-center">
           <p class="text-xs text-slate-500">ลงทะเบียนทั้งหมด</p>
           <p id="stat-total" class="text-2xl font-bold text-slate-800 mt-1">0</p>
@@ -197,26 +273,64 @@
           <p class="text-xs text-amber-700">ยังไม่มารายงานตัว</p>
           <p id="stat-pending" class="text-2xl font-bold text-amber-700 mt-1">0</p>
         </div>
+        <div class="bg-indigo-50 p-4 rounded-2xl border border-indigo-200 shadow-sm text-center">
+          <p class="text-xs text-indigo-700">อัตราการเช็กอิน</p>
+          <p id="stat-rate" class="text-2xl font-bold text-indigo-700 mt-1">0%</p>
+        </div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- แถบควบคุมเสียง & โหมดเครื่องสแกนบาร์โค้ด -->
+      <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <label class="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-700">
+            <input type="checkbox" id="sound-toggle" checked onchange="toggleSound(this.checked)" class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300" />
+            <span id="sound-toggle-label">🔊 เปิดเสียงตอบรับ (Beep Sound)</span>
+          </label>
+        </div>
+        <div class="flex items-center gap-2 text-xs text-slate-500">
+          <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span>รองรับปืนสแกนบาร์โค้ด USB/Bluetooth ยิงได้ทันที</span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- กล่องสแกนกล้อง & ปืนสแกนเนอร์ -->
         <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
           <div class="flex items-center justify-between">
-            <h2 class="font-bold text-lg text-slate-800">📷 สแกน QR Code หน้างาน</h2>
+            <h2 class="font-bold text-lg text-slate-800 flex items-center gap-2">
+              <span>📷</span> สแกน QR Code หน้างาน
+            </h2>
             <button id="btn-toggle-camera" onclick="toggleCamera()" class="px-4 py-1.5 rounded-xl text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition">
               เปิดกล้องสแกน
             </button>
           </div>
-          <div id="qr-reader" class="w-full rounded-xl overflow-hidden bg-slate-100 min-h-[260px] flex items-center justify-center text-sm text-slate-400">
+
+          <div id="qr-reader" class="w-full rounded-xl overflow-hidden bg-slate-100 min-h-[260px] flex items-center justify-center text-sm text-slate-400 border border-slate-200">
             กดปุ่ม "เปิดกล้องสแกน" เพื่อเริ่มใช้งาน
           </div>
-          <div id="scan-feedback" class="hidden p-4 rounded-xl border text-sm"></div>
+
+          <!-- ช่องรับค่าจากเครื่องยิงบาร์โค้ดโดยตรง -->
+          <div class="pt-2">
+            <label class="block text-xs font-medium text-slate-600 mb-1">🔫 ช่องยิงเครื่องสแกนบาร์โค้ด / สแกนเนอร์ USB (กด Enter เพื่อเช็กอิน)</label>
+            <div class="flex gap-2">
+              <input type="text" id="hardware-scanner-input" onkeydown="handleHardwareScannerKey(event)" placeholder="สแกนเนอร์ยิงค่า REG-XXXX เข้าที่นี่อัตโนมัติ..." class="flex-1 px-3.5 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm font-mono" />
+              <button onclick="submitHardwareInput()" class="px-4 py-2 bg-slate-900 text-white rounded-xl text-sm font-medium hover:bg-slate-800">ยืนยัน</button>
+            </div>
+          </div>
+
+          <div id="scan-feedback" class="hidden p-4 rounded-xl border text-sm transition-all duration-300"></div>
         </div>
 
+        <!-- รายการค้นหา & เช็กอินแบบ Manual -->
         <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-          <h2 class="font-bold text-lg text-slate-800">⌨️ ค้นหาชื่อ / กรอกรหัสเช็กอิน</h2>
-          <input type="text" id="manual-search-input" oninput="renderCheckinList()" placeholder="พิมพ์ชื่อ-นามสกุล, หน่วยงาน หรือรหัส REG-..." class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm" />
-          <div id="checkin-attendee-list" class="max-h-[340px] overflow-y-auto divide-y divide-slate-100"></div>
+          <div class="flex items-center justify-between">
+            <h2 class="font-bold text-lg text-slate-800 flex items-center gap-2">
+              <span>⌨️</span> ค้นหาชื่อ / เช็กอินด่วน
+            </h2>
+            <span id="manual-search-count" class="text-xs text-slate-400">0 รายการ</span>
+          </div>
+          <input type="text" id="manual-search-input" oninput="renderCheckinList()" placeholder="พิมพ์ชื่อ-นามสกุล, หน่วยงาน, เบอร์ หรือรหัส REG-..." class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm" />
+          <div id="checkin-attendee-list" class="max-h-[380px] overflow-y-auto divide-y divide-slate-100 pr-1"></div>
         </div>
       </div>
     </section>
@@ -242,71 +356,172 @@
       </div>
 
       <div id="admin-dashboard" class="hidden space-y-6">
+        <!-- แถบหัวแดชบอร์ด -->
+        <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+          <div>
+            <h2 class="text-lg font-bold text-slate-800">📊 แดชบอร์ดและจัดการระบบ</h2>
+            <p class="text-xs text-slate-500">ควบคุมโครงการ, ตรวจสอบสถิติ, แสดงภาพ QR Code และพิมพ์ป้ายชื่อ</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="exportCSV()" class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-medium transition flex items-center gap-1.5">
+              <span>📊</span> ดาวน์โหลด Excel (CSV)
+            </button>
+            <button onclick="logoutAdmin()" class="px-3 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 text-xs sm:text-sm font-medium transition">
+              ออกจากระบบ
+            </button>
+          </div>
+        </div>
+
+        <!-- กราฟและสถิติภาพรวม (Analytics Charts) -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center justify-center text-center">
+            <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">สัดส่วนการเช็กอิน</h3>
+            <div class="w-44 h-44 relative flex items-center justify-center">
+              <canvas id="chart-checkin"></canvas>
+            </div>
+            <div class="flex justify-center gap-4 mt-2 text-xs">
+              <span class="text-emerald-600 font-medium">● เช็กอินแล้ว (<span id="chart-val-checked">0</span>)</span>
+              <span class="text-slate-400 font-medium">● ยังไม่มา (<span id="chart-val-pending">0</span>)</span>
+            </div>
+          </div>
+
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center justify-center text-center">
+            <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">รูปแบบการเข้าร่วม</h3>
+            <div class="w-44 h-44 relative flex items-center justify-center">
+              <canvas id="chart-type"></canvas>
+            </div>
+            <div class="flex justify-center gap-4 mt-2 text-xs">
+              <span class="text-sky-600 font-medium">● Onsite (<span id="chart-val-onsite">0</span>)</span>
+              <span class="text-purple-600 font-medium">● Online (<span id="chart-val-online">0</span>)</span>
+            </div>
+          </div>
+
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+            <div>
+              <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">สรุปข้อมูลสำคัญ</h3>
+              <div class="space-y-3 text-sm">
+                <div class="flex justify-between items-center pb-2 border-b border-slate-100">
+                  <span class="text-slate-500">โควตารับสมัคร:</span>
+                  <span id="summary-quota" class="font-bold text-slate-800">-</span>
+                </div>
+                <div class="flex justify-between items-center pb-2 border-b border-slate-100">
+                  <span class="text-slate-500">ที่นั่งคงเหลือ:</span>
+                  <span id="summary-remaining" class="font-bold text-emerald-600">-</span>
+                </div>
+                <div class="flex justify-between items-center pb-2 border-b border-slate-100">
+                  <span class="text-slate-500">อัตราผู้มางาน:</span>
+                  <span id="summary-rate" class="font-bold text-indigo-600">-</span>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span class="text-slate-500">เกียรติบัตรออนไลน์:</span>
+                  <span id="summary-cert-status" class="font-semibold text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-600">ปิด</span>
+                </div>
+              </div>
+            </div>
+            <div class="pt-4 border-t border-slate-100 text-xs text-slate-400">
+              💡 แอดมินสามารถเปิด QR Code บนจอมือถือให้ผู้เข้าอบรมสแกนได้ทันทีโดยกดปุ่ม "📱 QR" ในตาราง
+            </div>
+          </div>
+        </div>
+
+        <!-- ฟอร์มตั้งค่ารายละเอียดโครงการ -->
         <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h2 class="text-lg font-bold text-slate-800">⚙️ ตั้งค่ารายละเอียดโครงการ (อัปเดตขึ้น Cloud ทันที)</h2>
-            <button onclick="logoutAdmin()" class="text-xs text-red-600 hover:underline">ออกจากระบบ</button>
+          <div class="border-b border-slate-100 pb-3">
+            <h2 class="text-base font-bold text-slate-800">⚙️ ตั้งค่ารายละเอียดโครงการ (Cloud Real-time)</h2>
+            <p class="text-xs text-slate-500">เมื่อบันทึกแล้ว ข้อมูลในหน้าลงทะเบียนและ E-Ticket จะอัปเดตทันที</p>
           </div>
 
           <form onsubmit="saveEventConfig(event)" class="space-y-4">
             <div>
               <label class="block text-sm font-medium text-slate-700 mb-1">ชื่อโครงการ / หัวข้อการประชุมสัมมนา</label>
-              <input type="text" id="cfg-title" required class="w-full px-4 py-2 rounded-xl border border-slate-300" />
+              <input type="text" id="cfg-title" required class="w-full px-4 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm" />
             </div>
             <div>
               <label class="block text-sm font-medium text-slate-700 mb-1">รายละเอียดและวัตถุประสงค์</label>
-              <textarea id="cfg-desc" rows="3" class="w-full px-4 py-2 rounded-xl border border-slate-300"></textarea>
+              <textarea id="cfg-desc" rows="3" class="w-full px-4 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm"></textarea>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label class="block text-sm font-medium text-slate-700 mb-1">วันและเวลาจัดงาน</label>
-                <input type="text" id="cfg-date" required class="w-full px-4 py-2 rounded-xl border border-slate-300" />
+                <input type="text" id="cfg-date" required class="w-full px-4 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm" />
               </div>
               <div>
                 <label class="block text-sm font-medium text-slate-700 mb-1">สถานที่จัดงาน / ลิงก์ประชุม</label>
-                <input type="text" id="cfg-location" required class="w-full px-4 py-2 rounded-xl border border-slate-300" />
+                <input type="text" id="cfg-location" required class="w-full px-4 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm" />
               </div>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
               <div>
                 <label class="block text-sm font-medium text-slate-700 mb-1">จำนวนที่นั่งสูงสุด (โควตา)</label>
-                <input type="number" id="cfg-quota" min="1" required class="w-full px-4 py-2 rounded-xl border border-slate-300" />
+                <input type="number" id="cfg-quota" min="1" required class="w-full px-4 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm" />
               </div>
               <div>
                 <label class="block text-sm font-medium text-slate-700 mb-1">สถานะการรับสมัคร</label>
-                <select id="cfg-status" class="w-full px-4 py-2 rounded-xl border border-slate-300 bg-white">
+                <select id="cfg-status" class="w-full px-4 py-2 rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-emerald-500 outline-none text-sm">
                   <option value="open">เปิดรับสมัคร (Open)</option>
                   <option value="closed">ปิดรับสมัคร (Closed)</option>
                 </select>
               </div>
               <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">เปิดดาวน์โหลดเกียรติบัตร</label>
+                <select id="cfg-cert-enabled" class="w-full px-4 py-2 rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-emerald-500 outline-none text-sm">
+                  <option value="false">ปิด (ยังไม่เปิดให้ดาวน์โหลด)</option>
+                  <option value="true">เปิด (สำหรับผู้เช็กอินแล้ว)</option>
+                </select>
+              </div>
+              <div>
                 <label class="block text-sm font-medium text-slate-700 mb-1">เปลี่ยนรหัสผ่าน Admin</label>
-                <input type="text" id="cfg-password" required class="w-full px-4 py-2 rounded-xl border border-slate-300" />
+                <input type="text" id="cfg-password" required class="w-full px-4 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm" />
               </div>
             </div>
-            <button type="submit" id="btn-save-cfg" class="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition">
+            <button type="submit" id="btn-save-cfg" class="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition text-sm">
               💾 บันทึกการตั้งค่าโครงการ
             </button>
           </form>
         </div>
 
+        <!-- รายชื่อผู้ลงทะเบียนและการจัดการ -->
         <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
           <div class="flex flex-wrap items-center justify-between gap-3">
-            <h2 class="text-lg font-bold text-slate-800">📋 รายชื่อผู้ลงทะเบียนทั้งหมด (<span id="admin-reg-count">0</span> คน)</h2>
-            <button onclick="exportCSV()" class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium transition">
-              📊 ดาวน์โหลดไฟล์ Excel (CSV)
-            </button>
+            <div>
+              <h2 class="text-lg font-bold text-slate-800">📋 รายชื่อผู้ลงทะเบียนทั้งหมด (<span id="admin-reg-count">0</span> คน)</h2>
+              <p class="text-xs text-slate-500">สามารถค้นหา กรองข้อมูล เปิดดู QR Code ขนาดใหญ่บนจอมือถือ และพิมพ์ป้ายชื่อได้</p>
+            </div>
           </div>
+
+          <!-- ฟิลเตอร์ตาราง Admin -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
+            <div>
+              <input type="text" id="admin-filter-search" oninput="renderAdminTable()" placeholder="🔍 ค้นหาชื่อ, หน่วยงาน, เบอร์ หรือรหัส..." class="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs outline-none focus:ring-2 focus:ring-emerald-500" />
+            </div>
+            <div>
+              <select id="admin-filter-type" onchange="renderAdminTable()" class="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs outline-none focus:ring-2 focus:ring-emerald-500">
+                <option value="all">รูปแบบ: ทั้งหมด</option>
+                <option value="Onsite">เฉพาะ Onsite</option>
+                <option value="Online">เฉพาะ Online</option>
+              </select>
+            </div>
+            <div>
+              <select id="admin-filter-status" onchange="renderAdminTable()" class="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs outline-none focus:ring-2 focus:ring-emerald-500">
+                <option value="all">สถานะเช็กอิน: ทั้งหมด</option>
+                <option value="checked">เช็กอินแล้ว</option>
+                <option value="pending">ยังไม่มารายงานตัว</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- ตารางรายชื่อ -->
           <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse text-sm">
               <thead>
-                <tr class="border-b border-slate-200 text-slate-500">
+                <tr class="border-b border-slate-200 text-slate-500 bg-slate-50/50">
                   <th class="py-3 px-2">รหัส</th>
                   <th class="py-3 px-2">ชื่อ-นามสกุล</th>
                   <th class="py-3 px-2">หน่วยงาน</th>
                   <th class="py-3 px-2">เบอร์โทร</th>
+                  <th class="py-3 px-2">ประเภท</th>
                   <th class="py-3 px-2">สถานะเช็กอิน</th>
-                  <th class="py-3 px-2 text-right">จัดการ</th>
+                  <th class="py-3 px-2 text-right">เครื่องมือจัดการ</th>
                 </tr>
               </thead>
               <tbody id="admin-table-body" class="divide-y divide-slate-100"></tbody>
@@ -317,17 +532,171 @@
     </section>
   </main>
 
-  <!-- Lookup Modal -->
+  <!-- ==================== MODALS ==================== -->
+
+  <!-- Modal 1: ค้นหาบัตรเข้างานเดิม -->
   <div id="lookup-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl">
       <div class="flex justify-between items-center">
-        <h3 class="font-bold text-lg">ค้นหาบัตรเข้างานเดิม</h3>
-        <button onclick="toggleLookupModal(false)" class="text-slate-400 hover:text-slate-700 text-xl">&times;</button>
+        <h3 class="font-bold text-lg text-slate-800">🔍 ค้นหาบัตรเข้างานเดิม</h3>
+        <button onclick="toggleLookupModal(false)" class="text-slate-400 hover:text-slate-700 text-2xl leading-none">&times;</button>
       </div>
-      <p class="text-sm text-slate-500">กรอกเบอร์โทรศัพท์ หรือ ชื่อ-นามสกุล ที่ใช้ลงทะเบียน</p>
-      <input type="text" id="lookup-query" placeholder="เช่น 0812345678 หรือ สมชาย" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 outline-none" />
-      <button onclick="searchExistingTicket()" class="w-full py-2.5 rounded-xl bg-emerald-600 text-white font-semibold">ค้นหาบัตร</button>
+      <p class="text-sm text-slate-500">กรอกเบอร์โทรศัพท์, ชื่อ-นามสกุล หรือ Ticket ID</p>
+      <input type="text" id="lookup-query" onkeydown="if(event.key==='Enter') searchExistingTicket()" placeholder="เช่น 0812345678 หรือ สมชาย" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-500" />
+      <button onclick="searchExistingTicket()" class="w-full py-2.5 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition">ค้นหาบัตร</button>
       <div id="lookup-results" class="space-y-2 max-h-60 overflow-y-auto"></div>
+    </div>
+  </div>
+
+  <!-- Modal 2: Admin QR Code Viewer & On-Screen Scan Modal (จอมือถือให้ผู้เข้าอบรมสแกน) -->
+  <div id="admin-qr-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-2xl text-center relative border border-slate-200">
+      <button onclick="closeAdminQrModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-800 text-2xl leading-none">&times;</button>
+
+      <div>
+        <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600">📱 QR Code สำหรับสแกนหน้างาน</span>
+        <h3 id="admin-modal-name" class="font-bold text-lg text-slate-800 mt-2"></h3>
+        <p id="admin-modal-org" class="text-xs text-slate-500"></p>
+      </div>
+
+      <!-- ภาพ QR Code ขนาดใหญ่ คอนทราสต์สูงให้สแกนได้สะดวก -->
+      <div class="p-3 bg-white border-2 border-emerald-500 rounded-2xl shadow-inner flex flex-col items-center justify-center mx-auto w-fit">
+        <div id="admin-modal-qrcode"></div>
+        <p id="admin-modal-ticket-id" class="font-mono font-bold text-sm text-emerald-700 mt-2 tracking-wider"></p>
+      </div>
+
+      <div id="admin-modal-checkin-status" class="text-xs"></div>
+
+      <!-- Action Buttons -->
+      <div class="grid grid-cols-2 gap-2 pt-2">
+        <button onclick="downloadAdminModalQR()" class="py-2 px-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-medium transition flex items-center justify-center gap-1">
+          <span>📥</span> โหลดรูป QR
+        </button>
+        <button onclick="printNametagFromModal()" class="py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-medium transition flex items-center justify-center gap-1">
+          <span>🏷️</span> พิมพ์ป้ายชื่อ
+        </button>
+      </div>
+
+      <div class="pt-1 space-y-1.5">
+        <button id="btn-admin-modal-checkin-action" onclick="toggleCheckinFromModal()" class="w-full py-2.5 rounded-xl text-xs font-semibold transition"></button>
+        <button id="btn-admin-modal-cert" onclick="openCertFromModal()" class="w-full py-2 rounded-xl text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-white transition flex items-center justify-center gap-1.5">
+          <span>🎓</span> พิมพ์เกียรติบัตรให้คนนี้
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 3: แก้ไขข้อมูลผู้ลงทะเบียน (Edit Attendee Modal) -->
+  <div id="edit-attendee-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-xl">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+        <h3 class="font-bold text-lg text-slate-800">✏️ แก้ไขข้อมูลผู้ลงทะเบียน</h3>
+        <button onclick="closeEditModal()" class="text-slate-400 hover:text-slate-700 text-2xl leading-none">&times;</button>
+      </div>
+
+      <form onsubmit="handleSaveEditAttendee(event)" class="space-y-3">
+        <input type="hidden" id="edit-id" />
+        <div>
+          <label class="block text-xs font-medium text-slate-700 mb-1">รหัสบัตร (Ticket ID)</label>
+          <input type="text" id="edit-id-display" disabled class="w-full px-3 py-2 rounded-xl bg-slate-100 border border-slate-200 font-mono text-sm text-slate-500" />
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-700 mb-1">ชื่อ - นามสกุล *</label>
+            <input type="text" id="edit-name" required class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-emerald-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-700 mb-1">หน่วยงาน / สังกัด *</label>
+            <input type="text" id="edit-org" required class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-emerald-500 outline-none" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-700 mb-1">เบอร์โทรศัพท์ *</label>
+            <input type="tel" id="edit-phone" required class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-emerald-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-700 mb-1">อีเมล</label>
+            <input type="email" id="edit-email" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-emerald-500 outline-none" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-700 mb-1">รูปแบบการเข้าร่วม</label>
+            <select id="edit-type" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
+              <option value="Onsite (เข้าร่วม ณ สถานที่จัดงาน)">Onsite (เข้าร่วม ณ สถานที่จัดงาน)</option>
+              <option value="Online (เข้าร่วมผ่านระบบออนไลน์)">Online (เข้าร่วมผ่านระบบออนไลน์)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-700 mb-1">สถานะเช็กอิน</label>
+            <select id="edit-checkedin" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
+              <option value="false">ยังไม่มารายงานตัว</option>
+              <option value="true">เช็กอินแล้ว</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="pt-3 flex justify-end gap-2 border-t border-slate-100">
+          <button type="button" onclick="closeEditModal()" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm">ยกเลิก</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm">💾 บันทึกการแก้ไข</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 4: ออกเกียรติบัตรออนไลน์ (E-Certificate Modal) -->
+  <div id="cert-modal" class="hidden fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+        <div>
+          <h3 class="font-bold text-lg text-slate-800">🎓 เกียรติบัตรออนไลน์ (E-Certificate)</h3>
+          <p class="text-xs text-slate-500">สำหรับผู้ผ่านการลงทะเบียนและเช็กอินเข้าร่วมงานแล้ว</p>
+        </div>
+        <button onclick="closeCertModal()" class="text-slate-400 hover:text-slate-700 text-2xl leading-none">&times;</button>
+      </div>
+
+      <div class="w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-50 flex justify-center items-center p-2">
+        <canvas id="cert-preview-canvas" width="1200" height="850" class="w-full h-auto max-h-[380px] object-contain shadow-sm bg-white rounded"></canvas>
+      </div>
+
+      <div class="flex flex-wrap justify-between items-center gap-3 pt-2">
+        <p class="text-xs text-slate-400">สามารถดาวน์โหลดเป็นภาพความละเอียดสูง หรือสั่งพิมพ์ได้ทันที</p>
+        <div class="flex gap-2">
+          <button onclick="downloadCertImage()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-medium transition flex items-center gap-1.5">
+            <span>📥</span> ดาวน์โหลดภาพเกียรติบัตร
+          </button>
+          <button onclick="printCert()" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-sm font-medium transition flex items-center gap-1.5">
+            <span>🖨️</span> สั่งพิมพ์เกียรติบัตร
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Printable Hidden Container for Name Badge (ป้ายคล้องคอ 9x13 cm) -->
+  <div id="printable-badge" class="hidden bg-white p-6 rounded-2xl border-2 border-slate-300 flex-col items-center justify-between text-center space-y-4">
+    <div class="w-full border-b-2 border-emerald-600 pb-2">
+      <p id="badge-event-title" class="text-xs font-semibold text-slate-700 line-clamp-2"></p>
+      <span class="inline-block mt-1 px-3 py-0.5 rounded-full text-[10px] font-bold uppercase bg-emerald-100 text-emerald-800" id="badge-tag-type">
+        ONSITE ATTENDEE
+      </span>
+    </div>
+
+    <div class="my-auto py-2">
+      <h2 id="badge-name" class="text-2xl font-bold text-slate-900 leading-tight"></h2>
+      <p id="badge-org" class="text-sm font-medium text-slate-600 mt-1"></p>
+    </div>
+
+    <div class="flex flex-col items-center">
+      <div id="badge-qrcode" class="p-2 border border-slate-200 rounded-xl bg-white"></div>
+      <p id="badge-id" class="font-mono font-bold text-xs text-slate-500 mt-1.5"></p>
+    </div>
+
+    <div class="w-full border-t border-slate-200 pt-2 text-[10px] text-slate-400">
+      รพ.หนองจิก • EventPass Cloud
     </div>
   </div>
 
@@ -352,7 +721,7 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // Mobile Auto-Compact Header on Scroll
+    // ---------------- Mobile Auto-Compact Header on Scroll ----------------
     let lastScrollY = window.scrollY;
     let ticking = false;
     window.addEventListener("scroll", () => {
@@ -374,6 +743,7 @@
       }
     }, { passive: true });
 
+    // ---------------- App State ----------------
     let eventConfig = {
       title: "โครงการอบรมเชิงปฏิบัติการพัฒนาศักยภาพบุคลากร ประจำปี 2569",
       desc: "เรียนรู้แนวทางการประยุกต์ใช้เทคโนโลยีดิจิทัลและ AI เพื่อยกระดับประสิทธิภาพการทำงานในองค์กร",
@@ -381,13 +751,149 @@
       location: "ห้องประชุมใหญ่ ชั้น 3 อาคารอำนวยการ",
       quota: 100,
       status: "open",
-      password: "admin1234"
+      password: "admin1234",
+      certEnabled: false
     };
+
     let registrations = [];
     let isAdminLoggedIn = false;
     let html5QrCode = null;
     let isCameraRunning = false;
+    window.currentActiveTicket = null;
+    let selectedAdminAttendee = null;
 
+    // Charts references
+    let chartCheckinInstance = null;
+    let chartTypeInstance = null;
+
+    // ---------------- Sound Effects (Web Audio API) ----------------
+    let audioCtx = null;
+    let isSoundEnabled = localStorage.getItem("eventpass_sound_enabled") !== "false";
+
+    function getAudioContext() {
+      if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) audioCtx = new AudioContextClass();
+      }
+      if (audioCtx && audioCtx.state === "suspended") {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    window.toggleSound = function(enabled) {
+      isSoundEnabled = enabled;
+      localStorage.setItem("eventpass_sound_enabled", enabled ? "true" : "false");
+      document.getElementById("sound-toggle-label").textContent = enabled
+        ? "🔊 เปิดเสียงตอบรับ (Beep Sound)"
+        : "🔇 ปิดเสียงตอบรับ (Mute)";
+    };
+
+    window.playBeep = function(type) {
+      if (!isSoundEnabled) return;
+      try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+
+        if (type === "success") {
+          // Two-tone pleasant high chime
+          const now = ctx.currentTime;
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(880, now); // A5
+          osc.frequency.exponentialRampToValueAtTime(1318.51, now + 0.12); // E6
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.35);
+        } else if (type === "warning") {
+          // Warning two-step buzzer
+          const now = ctx.currentTime;
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "triangle";
+          osc.frequency.setValueAtTime(440, now);
+          osc.frequency.setValueAtTime(330, now + 0.15);
+          gain.gain.setValueAtTime(0.25, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.4);
+        } else {
+          // Error buzz
+          const now = ctx.currentTime;
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "sawtooth";
+          osc.frequency.setValueAtTime(220, now);
+          gain.gain.setValueAtTime(0.25, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.3);
+        }
+      } catch (err) {
+        console.warn("Audio playback error:", err);
+      }
+    };
+
+    // ---------------- Hardware Barcode Scanner Support ----------------
+    let scannerBuffer = "";
+    let scannerLastKeyTime = 0;
+
+    window.addEventListener("keydown", (e) => {
+      // Don't intercept if user is typing into normal text fields
+      const activeEl = document.activeElement;
+      const isInput = activeEl && (activeEl.tagName === "INPUT" || activeEl.tagName === "TEXTAREA" || activeEl.tagName === "SELECT");
+
+      // Exception: if typing in #hardware-scanner-input, let the input listener handle it
+      if (isInput && activeEl.id !== "hardware-scanner-input") return;
+
+      const now = Date.now();
+      const char = e.key;
+
+      if (char === "Enter") {
+        if (scannerBuffer.trim().length >= 4) {
+          const scannedText = scannerBuffer.trim();
+          scannerBuffer = "";
+          processCheckin(scannedText);
+          e.preventDefault();
+        }
+        return;
+      }
+
+      // Barcode scanners type very rapidly (typically < 50ms between keystrokes)
+      if (now - scannerLastKeyTime > 150) {
+        scannerBuffer = "";
+      }
+
+      if (char.length === 1) {
+        scannerBuffer += char;
+        scannerLastKeyTime = now;
+      }
+    });
+
+    window.handleHardwareScannerKey = function(event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        submitHardwareInput();
+      }
+    };
+
+    window.submitHardwareInput = function() {
+      const input = document.getElementById("hardware-scanner-input");
+      const val = input.value.trim();
+      if (!val) return;
+      processCheckin(val);
+      input.value = "";
+    };
+
+    // ---------------- Firebase Firestore Subscriptions ----------------
     const configDocRef = doc(db, "config", "event_details");
     const regCollectionRef = collection(db, "registrations");
 
@@ -413,8 +919,29 @@
       updateEventUI();
       renderCheckinList();
       renderAdminTable();
+      updateAdminCharts();
+
+      // Check URL parameters for direct ticket view on initial load
+      checkUrlTicketParam();
     });
 
+    // ---------------- URL Deep Linking for Tickets (?ticket=REG-XXXX or ?id=REG-XXXX) ----------------
+    let hasCheckedUrlParam = false;
+    function checkUrlTicketParam() {
+      if (hasCheckedUrlParam || registrations.length === 0) return;
+      hasCheckedUrlParam = true;
+      const params = new URLSearchParams(window.location.search);
+      const ticketParam = params.get("ticket") || params.get("id");
+      if (ticketParam) {
+        const found = registrations.find(r => r.id.toUpperCase() === ticketParam.trim().toUpperCase());
+        if (found) {
+          switchTab("register");
+          showTicket(found);
+        }
+      }
+    }
+
+    // ---------------- UI Update ----------------
     function updateEventUI() {
       document.getElementById("display-title").textContent = eventConfig.title;
       document.getElementById("display-desc").textContent = eventConfig.desc;
@@ -441,15 +968,34 @@
         badgeStatus.textContent = "เปิดรับสมัคร";
         badgeStatus.className = "px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30";
         submitBtn.disabled = false;
-        submitBtn.textContent = "ยืนยันการลงทะเบียนและสร้าง QR Code";
+        submitBtn.textContent = "ยืนยันการลงทะเบียนและรับ QR Code";
       }
 
+      // Check-in statistics
       const checkedCount = registrations.filter(r => r.checkedIn).length;
+      const pendingCount = registrations.length - checkedCount;
+      const attendanceRate = registrations.length > 0 ? Math.round((checkedCount / registrations.length) * 100) : 0;
+
       document.getElementById("stat-total").textContent = registrations.length;
       document.getElementById("stat-checked").textContent = checkedCount;
-      document.getElementById("stat-pending").textContent = registrations.length - checkedCount;
-      document.getElementById("admin-reg-count").textContent = registrations.length;
+      document.getElementById("stat-pending").textContent = pendingCount;
+      document.getElementById("stat-rate").textContent = `${attendanceRate}%`;
 
+      document.getElementById("admin-reg-count").textContent = registrations.length;
+      document.getElementById("summary-quota").textContent = `${eventConfig.quota} ที่นั่ง`;
+      document.getElementById("summary-remaining").textContent = `${remaining} ที่นั่ง`;
+      document.getElementById("summary-rate").textContent = `${attendanceRate}% (${checkedCount}/${registrations.length})`;
+
+      const certBadge = document.getElementById("summary-cert-status");
+      if (eventConfig.certEnabled) {
+        certBadge.textContent = "เปิดใช้งาน";
+        certBadge.className = "font-semibold text-xs px-2 py-0.5 rounded bg-emerald-100 text-emerald-700";
+      } else {
+        certBadge.textContent = "ปิด";
+        certBadge.className = "font-semibold text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-600";
+      }
+
+      // Populate Admin Config inputs if not actively typing
       if (document.activeElement?.tagName !== "INPUT" && document.activeElement?.tagName !== "TEXTAREA") {
         document.getElementById("cfg-title").value = eventConfig.title;
         document.getElementById("cfg-desc").value = eventConfig.desc;
@@ -458,9 +1004,27 @@
         document.getElementById("cfg-quota").value = eventConfig.quota;
         document.getElementById("cfg-status").value = eventConfig.status;
         document.getElementById("cfg-password").value = eventConfig.password;
+        document.getElementById("cfg-cert-enabled").value = eventConfig.certEnabled ? "true" : "false";
+      }
+
+      // If active ticket displayed, refresh ticket check-in status badge
+      if (window.currentActiveTicket) {
+        const fresh = registrations.find(r => r.id === window.currentActiveTicket.id);
+        if (fresh) {
+          window.currentActiveTicket = fresh;
+          const checkinBadge = document.getElementById("ticket-checkin-badge");
+          if (fresh.checkedIn) {
+            checkinBadge.textContent = `✓ เช็กอินแล้ว (${fresh.checkedInAt || ""})`;
+            checkinBadge.className = "mt-2 inline-block px-3 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30";
+          } else {
+            checkinBadge.textContent = "รอเช็กอินหน้างาน";
+            checkinBadge.className = "mt-2 inline-block px-3 py-0.5 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-400/30";
+          }
+        }
       }
     }
 
+    // ---------------- Registration Handler ----------------
     window.handleRegister = async function(e) {
       e.preventDefault();
       const btn = document.getElementById("btn-submit-reg");
@@ -473,9 +1037,9 @@
       const email = document.getElementById("reg-email").value.trim();
       const type = document.getElementById("reg-type").value;
 
-      const duplicate = registrations.find(r => r.phone === phone || r.name === name);
+      const duplicate = registrations.find(r => r.phone === phone || r.name.toLowerCase() === name.toLowerCase());
       if (duplicate) {
-        alert("พบข้อมูลการลงทะเบียนของท่านในระบบแล้ว ระบบจะแสดงบัตรเข้างานเดิมให้ทันที");
+        alert("พบข้อมูลการลงทะเบียนของท่านในระบบแล้ว ระบบจะเปิดบัตรเข้างานเดิมให้ทันที");
         showTicket(duplicate);
         btn.disabled = false;
         return;
@@ -495,6 +1059,12 @@
         await setDoc(doc(db, "registrations", ticketId), newReg);
         document.getElementById("reg-form").reset();
         showTicket(newReg);
+
+        // Confetti effect on registration success
+        if (typeof confetti === "function") {
+          confetti({ particleCount: 75, spread: 70, origin: { y: 0.6 } });
+        }
+        playBeep("success");
       } catch (err) {
         alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล: " + err.message);
       } finally {
@@ -502,7 +1072,9 @@
       }
     };
 
+    // ---------------- Show Ticket & QR Code ----------------
     window.showTicket = function(reg) {
+      window.currentActiveTicket = reg;
       document.getElementById("register-form-card").classList.add("hidden");
       document.getElementById("ticket-result-card").classList.remove("hidden");
 
@@ -513,12 +1085,21 @@
       document.getElementById("ticket-type").textContent = reg.type;
       document.getElementById("ticket-date").textContent = eventConfig.date;
 
+      const checkinBadge = document.getElementById("ticket-checkin-badge");
+      if (reg.checkedIn) {
+        checkinBadge.textContent = `✓ เช็กอินแล้ว (${reg.checkedInAt || ""})`;
+        checkinBadge.className = "mt-2 inline-block px-3 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30";
+      } else {
+        checkinBadge.textContent = "รอเช็กอินหน้างาน";
+        checkinBadge.className = "mt-2 inline-block px-3 py-0.5 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-400/30";
+      }
+
       const qrContainer = document.getElementById("qrcode-container");
       qrContainer.innerHTML = "";
       new QRCode(qrContainer, {
         text: reg.id,
-        width: 180,
-        height: 180,
+        width: 190,
+        height: 190,
         colorDark: "#0f172a",
         colorLight: "#ffffff",
         correctLevel: QRCode.CorrectLevel.H
@@ -534,16 +1115,48 @@
       const canvas = document.querySelector("#qrcode-container canvas");
       if (!canvas) return;
       const link = document.createElement("a");
-      link.download = document.getElementById("ticket-id").textContent + ".png";
+      link.download = (window.currentActiveTicket?.id || "QR-Ticket") + ".png";
       link.href = canvas.toDataURL("image/png");
       link.click();
     };
 
+    window.printTicket = function() {
+      setPrintPageOrientation("portrait");
+      document.body.classList.remove("print-mode-cert", "print-mode-badge");
+      document.body.classList.add("print-mode-ticket");
+      setTimeout(() => {
+        window.print();
+      }, 150);
+    };
+
+    // ---------------- Share Via LINE & Copy Link ----------------
+    window.shareViaLine = function() {
+      if (!window.currentActiveTicket) return;
+      const ticketUrl = `${window.location.origin}${window.location.pathname}?ticket=${window.currentActiveTicket.id}`;
+      const msg = `🎫 บัตรเข้าร่วมงาน E-Ticket ของคุณ ${window.currentActiveTicket.name}\nงาน: ${eventConfig.title}\nรหัส: ${window.currentActiveTicket.id}\nเปิดดูบัตรและ QR Code ได้ที่ลิงก์นี้:\n${ticketUrl}`;
+      const lineUrl = `https://line.me/R/msg/text/?${encodeURIComponent(msg)}`;
+      window.open(lineUrl, "_blank");
+    };
+
+    window.copyTicketLink = function() {
+      if (!window.currentActiveTicket) return;
+      const ticketUrl = `${window.location.origin}${window.location.pathname}?ticket=${window.currentActiveTicket.id}`;
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(ticketUrl).then(() => {
+          alert("คัดลอกลิงก์บัตรเข้างานเรียบร้อยแล้ว!\n" + ticketUrl);
+        });
+      } else {
+        prompt("คัดลอกลิงก์บัตรเข้างานด้านล่างนี้:", ticketUrl);
+      }
+    };
+
+    // ---------------- Lookup Modal (ค้นหาบัตรเดิม) ----------------
     window.toggleLookupModal = function(show) {
       document.getElementById("lookup-modal").classList.toggle("hidden", !show);
       if (show) {
         document.getElementById("lookup-query").value = "";
         document.getElementById("lookup-results").innerHTML = "";
+        setTimeout(() => document.getElementById("lookup-query").focus(), 100);
       }
     };
 
@@ -562,12 +1175,12 @@
       }
 
       resDiv.innerHTML = matches.map(r => `
-        <div class="p-3 border border-slate-200 rounded-xl flex justify-between items-center">
+        <div class="p-3 border border-slate-200 rounded-xl flex justify-between items-center bg-slate-50">
           <div>
-            <p class="font-semibold text-sm">${r.name}</p>
-            <p class="text-xs text-slate-500">${r.org} (${r.id})</p>
+            <p class="font-semibold text-sm text-slate-800">${r.name}</p>
+            <p class="text-xs text-slate-500">${r.org} • <span class="font-mono text-emerald-700 font-bold">${r.id}</span></p>
           </div>
-          <button onclick='selectLookupTicket("${r.id}")' class="px-3 py-1.5 bg-emerald-600 text-white text-xs rounded-lg font-medium">เปิดบัตร</button>
+          <button onclick='selectLookupTicket("${r.id}")' class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs rounded-lg font-medium transition">เปิดบัตร</button>
         </div>
       `).join("");
     };
@@ -580,6 +1193,7 @@
       }
     };
 
+    // ---------------- Camera Scanner ----------------
     window.toggleCamera = async function() {
       const btn = document.getElementById("btn-toggle-camera");
       if (isCameraRunning && html5QrCode) {
@@ -595,7 +1209,7 @@
       try {
         await html5QrCode.start(
           { facingMode: "environment" },
-          { fps: 10, qrbox: { width: 220, height: 220 } },
+          { fps: 12, qrbox: { width: 240, height: 240 } },
           (decodedText) => {
             processCheckin(decodedText.trim());
           }
@@ -604,7 +1218,7 @@
         btn.textContent = "ปิดกล้อง";
         btn.className = "px-4 py-1.5 rounded-xl text-sm font-medium bg-red-600 text-white hover:bg-red-700 transition";
       } catch (err) {
-        alert("ไม่สามารถเปิดกล้องได้ กรุณาอนุญาตสิทธิ์การใช้กล้องบนเบราว์เซอร์ (ต้องรันผ่าน HTTPS)");
+        alert("ไม่สามารถเปิดกล้องได้ กรุณาอนุญาตสิทธิ์การใช้กล้องบนเบราว์เซอร์ (ต้องรันผ่าน HTTPS หรือ localhost)");
       }
     };
 
@@ -612,22 +1226,25 @@
     let lastScanTime = 0;
 
     window.processCheckin = async function(ticketId) {
+      const cleanId = String(ticketId).trim();
       const now = Date.now();
-      if (ticketId === lastScannedCode && now - lastScanTime < 3000) return;
-      lastScannedCode = ticketId;
+      if (cleanId === lastScannedCode && now - lastScanTime < 3000) return;
+      lastScannedCode = cleanId;
       lastScanTime = now;
 
       const feedback = document.getElementById("scan-feedback");
       feedback.classList.remove("hidden");
 
-      const attendee = registrations.find(r => r.id.toUpperCase() === ticketId.toUpperCase());
+      const attendee = registrations.find(r => r.id.toUpperCase() === cleanId.toUpperCase());
       if (!attendee) {
+        playBeep("error");
         feedback.className = "p-4 rounded-xl border border-red-200 bg-red-50 text-red-700 text-sm";
-        feedback.innerHTML = `❌ <strong>ไม่พบข้อมูลในระบบ:</strong> รหัส ${ticketId}`;
+        feedback.innerHTML = `❌ <strong>ไม่พบข้อมูลในระบบ:</strong> รหัส ${cleanId}`;
         return;
       }
 
       if (attendee.checkedIn) {
+        playBeep("warning");
         feedback.className = "p-4 rounded-xl border border-amber-200 bg-amber-50 text-amber-800 text-sm";
         feedback.innerHTML = `⚠️ <strong>เช็กอินซ้ำ:</strong> ${attendee.name} (${attendee.org}) เช็กอินไปแล้วเมื่อ ${attendee.checkedInAt}`;
         return;
@@ -639,36 +1256,47 @@
         checkedInAt: timeStr
       });
 
+      playBeep("success");
+      if (typeof confetti === "function") {
+        confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
+      }
+
       feedback.className = "p-4 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-800 text-sm";
-      feedback.innerHTML = `✅ <strong>เช็กอินสำเร็จ!</strong> ยินดีต้อนรับคุณ <strong>${attendee.name}</strong> (${attendee.org})`;
+      feedback.innerHTML = `✅ <strong>เช็กอินสำเร็จ!</strong> ยินดีต้อนรับคุณ <strong>${attendee.name}</strong> (${attendee.org}) เวลา ${timeStr}`;
     };
 
+    // ---------------- Render Manual Check-in List ----------------
     window.renderCheckinList = function() {
       const q = document.getElementById("manual-search-input").value.trim().toLowerCase();
       const listDiv = document.getElementById("checkin-attendee-list");
       const filtered = registrations.filter(r =>
-        r.name.toLowerCase().includes(q) || r.org.toLowerCase().includes(q) || r.id.toLowerCase().includes(q)
+        r.name.toLowerCase().includes(q) || r.org.toLowerCase().includes(q) || r.id.toLowerCase().includes(q) || (r.phone && r.phone.includes(q))
       );
 
+      document.getElementById("manual-search-count").textContent = `${filtered.length} รายการ`;
+
       if (filtered.length === 0) {
-        listDiv.innerHTML = `<p class="text-center text-sm text-slate-400 py-8">ไม่มีรายชื่อผู้ลงทะเบียน</p>`;
+        listDiv.innerHTML = `<p class="text-center text-sm text-slate-400 py-8">ไม่พบรายชื่อผู้ลงทะเบียน</p>`;
         return;
       }
 
       listDiv.innerHTML = filtered.map(r => `
-        <div class="py-3 flex items-center justify-between gap-2">
-          <div>
-            <p class="font-semibold text-sm text-slate-800">${r.name}</p>
-            <p class="text-xs text-slate-500">${r.org} • <span class="font-mono">${r.id}</span></p>
+        <div class="py-3 flex items-center justify-between gap-2 hover:bg-slate-50/80 px-2 rounded-xl transition">
+          <div class="truncate">
+            <p class="font-semibold text-sm text-slate-800 truncate">${r.name}</p>
+            <p class="text-xs text-slate-500 truncate">${r.org} • <span class="font-mono text-emerald-700">${r.id}</span></p>
           </div>
-          ${r.checkedIn
-            ? `<span class="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-700 text-xs font-medium">✓ เช็กอิน (${r.checkedInAt})</span>`
-            : `<button onclick="processCheckin('${r.id}')" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-emerald-600 text-white text-xs font-medium transition">เช็กอิน</button>`
-          }
+          <div class="flex items-center gap-1.5 shrink-0">
+            ${r.checkedIn
+              ? `<span class="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-700 text-xs font-medium">✓ ${r.checkedInAt || "เข้างานแล้ว"}</span>`
+              : `<button onclick="processCheckin('${r.id}')" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-emerald-600 text-white text-xs font-medium transition">เช็กอิน</button>`
+            }
+          </div>
         </div>
       `).join("");
     };
 
+    // ---------------- Admin Login & Pass Toggle ----------------
     window.toggleAdminPassword = function() {
       const input = document.getElementById("admin-pass-input");
       const eyeOpen = document.getElementById("eye-icon-open");
@@ -690,6 +1318,8 @@
         isAdminLoggedIn = true;
         document.getElementById("admin-login-box").classList.add("hidden");
         document.getElementById("admin-dashboard").classList.remove("hidden");
+        renderAdminTable();
+        updateAdminCharts();
       } else {
         alert("รหัสผ่านไม่ถูกต้อง");
       }
@@ -706,6 +1336,7 @@
       document.getElementById("admin-login-box").classList.remove("hidden");
     };
 
+    // ---------------- Admin Config Save ----------------
     window.saveEventConfig = async function(e) {
       e.preventDefault();
       const btn = document.getElementById("btn-save-cfg");
@@ -717,6 +1348,7 @@
         location: document.getElementById("cfg-location").value.trim(),
         quota: Number(document.getElementById("cfg-quota").value),
         status: document.getElementById("cfg-status").value,
+        certEnabled: document.getElementById("cfg-cert-enabled").value === "true",
         password: document.getElementById("cfg-password").value.trim()
       };
       await setDoc(configDocRef, updated);
@@ -724,33 +1356,499 @@
       alert("บันทึกการตั้งค่าเรียบร้อยแล้ว ข้อมูลหน้าเว็บอัปเดตทันที!");
     };
 
+    // ---------------- Admin Table & Filters ----------------
     window.renderAdminTable = function() {
       const tbody = document.getElementById("admin-table-body");
-      tbody.innerHTML = registrations.map(r => `
-        <tr class="hover:bg-slate-50">
-          <td class="py-2.5 px-2 font-mono text-xs">${r.id}</td>
-          <td class="py-2.5 px-2 font-medium">${r.name}</td>
-          <td class="py-2.5 px-2 text-slate-600">${r.org}</td>
-          <td class="py-2.5 px-2 text-slate-600">${r.phone}</td>
+      if (!tbody) return;
+
+      const q = (document.getElementById("admin-filter-search")?.value || "").trim().toLowerCase();
+      const filterType = document.getElementById("admin-filter-type")?.value || "all";
+      const filterStatus = document.getElementById("admin-filter-status")?.value || "all";
+
+      const filtered = registrations.filter(r => {
+        const matchQ = !q || r.name.toLowerCase().includes(q) || r.org.toLowerCase().includes(q) || r.id.toLowerCase().includes(q) || (r.phone && r.phone.includes(q));
+        const matchType = filterType === "all" || (r.type && r.type.includes(filterType));
+        const matchStatus = filterStatus === "all" || (filterStatus === "checked" ? r.checkedIn : !r.checkedIn);
+        return matchQ && matchType && matchStatus;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400 text-sm">ไม่พบข้อมูลที่ตรงกับเงื่อนไข</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(r => `
+        <tr class="hover:bg-slate-50 transition">
+          <td class="py-2.5 px-2 font-mono text-xs font-semibold text-slate-700">${r.id}</td>
+          <td class="py-2.5 px-2 font-medium text-slate-800">${r.name}</td>
+          <td class="py-2.5 px-2 text-slate-600 text-xs">${r.org}</td>
+          <td class="py-2.5 px-2 text-slate-600 text-xs">${r.phone}</td>
+          <td class="py-2.5 px-2 text-xs">
+            <span class="px-2 py-0.5 rounded ${r.type && r.type.includes('Online') ? 'bg-purple-100 text-purple-700' : 'bg-sky-100 text-sky-700'}">
+              ${r.type && r.type.includes('Online') ? 'Online' : 'Onsite'}
+            </span>
+          </td>
           <td class="py-2.5 px-2">
             ${r.checkedIn
-              ? `<span class="text-xs px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">เข้างานแล้ว (${r.checkedInAt})</span>`
+              ? `<span class="text-xs px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 font-medium">เข้างานแล้ว (${r.checkedInAt || ""})</span>`
               : `<span class="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-500">ยังไม่มา</span>`
             }
           </td>
           <td class="py-2.5 px-2 text-right">
-            <button onclick="deleteAttendee('${r.id}')" class="text-xs text-red-500 hover:underline">ลบ</button>
+            <div class="flex items-center justify-end gap-1.5">
+              <button onclick="openAdminQrModal('${r.id}')" title="เปิด QR Code บนหน้าจอให้สแกน" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg text-xs font-medium transition">
+                📱 QR
+              </button>
+              <button onclick="openEditModal('${r.id}')" title="แก้ไขข้อมูล" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-medium transition">
+                ✏️
+              </button>
+              <button onclick="deleteAttendee('${r.id}')" title="ลบข้อมูล" class="px-2 py-1 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-xs font-medium transition">
+                🗑️
+              </button>
+            </div>
           </td>
         </tr>
       `).join("");
     };
 
+    // ---------------- Admin Analytics Charts (Chart.js) ----------------
+    function updateAdminCharts() {
+      if (!isAdminLoggedIn) return;
+
+      const checkedCount = registrations.filter(r => r.checkedIn).length;
+      const pendingCount = registrations.length - checkedCount;
+      const onsiteCount = registrations.filter(r => !r.type || r.type.includes("Onsite")).length;
+      const onlineCount = registrations.filter(r => r.type && r.type.includes("Online")).length;
+
+      document.getElementById("chart-val-checked").textContent = checkedCount;
+      document.getElementById("chart-val-pending").textContent = pendingCount;
+      document.getElementById("chart-val-onsite").textContent = onsiteCount;
+      document.getElementById("chart-val-online").textContent = onlineCount;
+
+      // 1. Check-in Status Donut Chart
+      const ctxCheckin = document.getElementById("chart-checkin")?.getContext("2d");
+      if (ctxCheckin) {
+        if (chartCheckinInstance) chartCheckinInstance.destroy();
+        chartCheckinInstance = new Chart(ctxCheckin, {
+          type: "doughnut",
+          data: {
+            labels: ["เช็กอินแล้ว", "ยังไม่มา"],
+            datasets: [{
+              data: [checkedCount, pendingCount],
+              backgroundColor: ["#10b981", "#cbd5e1"],
+              borderWidth: 2,
+              borderColor: "#ffffff"
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            cutout: "70%"
+          }
+        });
+      }
+
+      // 2. Attendance Type Donut Chart
+      const ctxType = document.getElementById("chart-type")?.getContext("2d");
+      if (ctxType) {
+        if (chartTypeInstance) chartTypeInstance.destroy();
+        chartTypeInstance = new Chart(ctxType, {
+          type: "doughnut",
+          data: {
+            labels: ["Onsite", "Online"],
+            datasets: [{
+              data: [onsiteCount, onlineCount],
+              backgroundColor: ["#0284c7", "#a855f7"],
+              borderWidth: 2,
+              borderColor: "#ffffff"
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            cutout: "70%"
+          }
+        });
+      }
+    }
+
+    // ---------------- Admin QR Modal (เปิดภาพ QR ให้สแกนจากจอมือถือผู้จัด) ----------------
+    window.openAdminQrModal = function(id) {
+      const reg = registrations.find(r => r.id === id);
+      if (!reg) return;
+      selectedAdminAttendee = reg;
+
+      document.getElementById("admin-modal-name").textContent = reg.name;
+      document.getElementById("admin-modal-org").textContent = reg.org;
+      document.getElementById("admin-modal-ticket-id").textContent = reg.id;
+
+      const statusEl = document.getElementById("admin-modal-checkin-status");
+      const actionBtn = document.getElementById("btn-admin-modal-checkin-action");
+
+      if (reg.checkedIn) {
+        statusEl.innerHTML = `<span class="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-medium">✓ เช็กอินแล้ว (${reg.checkedInAt})</span>`;
+        actionBtn.textContent = "ยกเลิกการเช็กอิน";
+        actionBtn.className = "w-full py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition";
+      } else {
+        statusEl.innerHTML = `<span class="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 font-medium">⏳ ยังไม่มารายงานตัว</span>`;
+        actionBtn.textContent = "✓ กดยืนยันเช็กอินให้ตรงนี้";
+        actionBtn.className = "w-full py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition";
+      }
+
+      const qrContainer = document.getElementById("admin-modal-qrcode");
+      qrContainer.innerHTML = "";
+      new QRCode(qrContainer, {
+        text: reg.id,
+        width: 220,
+        height: 220,
+        colorDark: "#022c22",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+      });
+
+      document.getElementById("admin-qr-modal").classList.remove("hidden");
+    };
+
+    window.closeAdminQrModal = function() {
+      document.getElementById("admin-qr-modal").classList.add("hidden");
+    };
+
+    window.downloadAdminModalQR = function() {
+      if (!selectedAdminAttendee) return;
+      const canvas = document.querySelector("#admin-modal-qrcode canvas");
+      if (!canvas) return;
+      const link = document.createElement("a");
+      link.download = `QR_${selectedAdminAttendee.id}_${selectedAdminAttendee.name}.png`;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    };
+
+    window.toggleCheckinFromModal = async function() {
+      if (!selectedAdminAttendee) return;
+      const newStatus = !selectedAdminAttendee.checkedIn;
+      const timeStr = newStatus ? new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }) + " น." : null;
+
+      await updateDoc(doc(db, "registrations", selectedAdminAttendee.id), {
+        checkedIn: newStatus,
+        checkedInAt: timeStr
+      });
+
+      selectedAdminAttendee.checkedIn = newStatus;
+      selectedAdminAttendee.checkedInAt = timeStr;
+      openAdminQrModal(selectedAdminAttendee.id);
+    };
+
+    // ---------------- Edit Attendee Modal ----------------
+    window.openEditModal = function(id) {
+      const reg = registrations.find(r => r.id === id);
+      if (!reg) return;
+
+      document.getElementById("edit-id").value = reg.id;
+      document.getElementById("edit-id-display").value = reg.id;
+      document.getElementById("edit-name").value = reg.name;
+      document.getElementById("edit-org").value = reg.org;
+      document.getElementById("edit-phone").value = reg.phone;
+      document.getElementById("edit-email").value = reg.email || "";
+      document.getElementById("edit-type").value = reg.type;
+      document.getElementById("edit-checkedin").value = reg.checkedIn ? "true" : "false";
+
+      document.getElementById("edit-attendee-modal").classList.remove("hidden");
+    };
+
+    window.closeEditModal = function() {
+      document.getElementById("edit-attendee-modal").classList.add("hidden");
+    };
+
+    window.handleSaveEditAttendee = async function(e) {
+      e.preventDefault();
+      const id = document.getElementById("edit-id").value;
+      const wasChecked = registrations.find(r => r.id === id)?.checkedIn;
+      const nowChecked = document.getElementById("edit-checkedin").value === "true";
+
+      let timeStr = registrations.find(r => r.id === id)?.checkedInAt;
+      if (!wasChecked && nowChecked) {
+        timeStr = new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }) + " น.";
+      } else if (!nowChecked) {
+        timeStr = null;
+      }
+
+      const updated = {
+        name: document.getElementById("edit-name").value.trim(),
+        org: document.getElementById("edit-org").value.trim(),
+        phone: document.getElementById("edit-phone").value.trim(),
+        email: document.getElementById("edit-email").value.trim(),
+        type: document.getElementById("edit-type").value,
+        checkedIn: nowChecked,
+        checkedInAt: timeStr
+      };
+
+      try {
+        await updateDoc(doc(db, "registrations", id), updated);
+        closeEditModal();
+        alert("บันทึกการแก้ไขข้อมูลเรียบร้อยแล้ว");
+      } catch (err) {
+        alert("เกิดข้อผิดพลาด: " + err.message);
+      }
+    };
+
+    // ---------------- Delete Attendee ----------------
     window.deleteAttendee = async function(id) {
-      if (confirm("ยืนยันการลบข้อมูลผู้ลงทะเบียนรหัส " + id + " ?")) {
+      if (confirm("ยืนยันการลบข้อมูลผู้ลงทะเบียนรหัส " + id + " ?\n(การกระทำนี้ไม่สามารถย้อนกลับได้)")) {
         await deleteDoc(doc(db, "registrations", id));
       }
     };
 
+    // ---------------- Print Nametag / Badge ----------------
+    window.printNametagCurrent = function() {
+      if (!window.currentActiveTicket) return;
+      renderAndPrintBadge(window.currentActiveTicket);
+    };
+
+    window.printNametagFromModal = function() {
+      if (!selectedAdminAttendee) return;
+      closeAdminQrModal();
+      renderAndPrintBadge(selectedAdminAttendee);
+    };
+
+    function renderAndPrintBadge(reg) {
+      document.getElementById("badge-event-title").textContent = eventConfig.title;
+      document.getElementById("badge-name").textContent = reg.name;
+      document.getElementById("badge-org").textContent = reg.org;
+      document.getElementById("badge-id").textContent = reg.id;
+      document.getElementById("badge-tag-type").textContent = reg.type && reg.type.includes("Online") ? "ONLINE PARTICIPANT" : "ONSITE ATTENDEE";
+
+      const badgeQr = document.getElementById("badge-qrcode");
+      badgeQr.innerHTML = "";
+      new QRCode(badgeQr, {
+        text: reg.id,
+        width: 130,
+        height: 130,
+        colorDark: "#0f172a",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+      });
+
+      setPrintPageOrientation("portrait");
+      document.body.classList.remove("print-mode-cert", "print-mode-ticket");
+      document.body.classList.add("print-mode-badge");
+      setTimeout(() => {
+        window.print();
+      }, 300);
+    }
+
+    // ---------------- Print Orientation & Sizing Controller ----------------
+    function setPrintPageOrientation(orientation) {
+      let styleEl = document.getElementById("dynamic-print-page-style");
+      if (!styleEl) {
+        styleEl = document.createElement("style");
+        styleEl.id = "dynamic-print-page-style";
+        document.head.appendChild(styleEl);
+      }
+      if (orientation === "landscape") {
+        styleEl.textContent = `
+          @page {
+            size: A4 landscape;
+            margin: 0mm;
+          }
+          html, body {
+            width: 297mm !important;
+            height: 210mm !important;
+            max-width: 297mm !important;
+            max-height: 210mm !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+          }
+        `;
+      } else {
+        styleEl.textContent = `
+          @page {
+            size: A4 portrait;
+            margin: 10mm;
+          }
+          html, body {
+            width: 100% !important;
+            height: auto !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: visible !important;
+          }
+        `;
+      }
+    }
+
+    function clearPrintPageOrientation() {
+      const styleEl = document.getElementById("dynamic-print-page-style");
+      if (styleEl) {
+        styleEl.textContent = "";
+      }
+    }
+
+    window.addEventListener("afterprint", () => {
+      document.body.classList.remove("print-mode-cert", "print-mode-ticket", "print-mode-badge");
+      clearPrintPageOrientation();
+    });
+
+    window.addEventListener("beforeprint", () => {
+      const certModal = document.getElementById("cert-modal");
+      if (certModal && !certModal.classList.contains("hidden")) {
+        setPrintPageOrientation("landscape");
+        document.body.classList.remove("print-mode-ticket", "print-mode-badge");
+        document.body.classList.add("print-mode-cert");
+      }
+    });
+
+    // ---------------- E-Certificate (วุฒิบัตร / เกียรติบัตรออนไลน์) ----------------
+    let currentCertAttendee = null;
+
+    window.openCertFromModal = function() {
+      if (!selectedAdminAttendee) return;
+      closeAdminQrModal();
+      openCertificateModal(selectedAdminAttendee);
+    };
+
+    window.openCertificateModal = function(reg) {
+      if (!reg) return;
+      if (!eventConfig.certEnabled && !isAdminLoggedIn) {
+        alert("ระบบยังไม่เปิดให้ดาวน์โหลดเกียรติบัตรในขณะนี้ (ผู้จัดจะเปิดระบบหลังเสร็จสิ้นการอบรม)");
+        return;
+      }
+      if (!reg.checkedIn && !isAdminLoggedIn) {
+        alert("ขออภัย: ผู้เข้าร่วมต้องผ่านการเช็กอินเข้าร่วมงานก่อน จึงจะสามารถออกเกียรติบัตรได้");
+        return;
+      }
+
+      currentCertAttendee = reg;
+      renderCertificateCanvas(reg);
+      document.getElementById("cert-modal").classList.remove("hidden");
+    };
+
+    window.closeCertModal = function() {
+      document.getElementById("cert-modal").classList.add("hidden");
+    };
+
+    function renderCertificateCanvas(reg) {
+      const canvas = document.getElementById("cert-preview-canvas");
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+
+      // High-resolution rendering for sharp A4 printing (297 x 210 mm)
+      // Scale coordinates 2x so text and vectors print crisp without blurring
+      const baseW = 1200;
+      const baseH = 848; // Exact A4 ratio: 1200 / (297/210) ≈ 848.5
+      const scale = 2;
+      canvas.width = baseW * scale;
+      canvas.height = baseH * scale;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(scale, scale);
+
+      const W = baseW;
+      const H = baseH;
+
+      // Background
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, W, H);
+
+      // Elegant Dual Border (อยู่ห่างจากขอบกระดาษพอดี ปลอดภัยไม่ถูกตัดขอบเครื่องพิมพ์)
+      ctx.strokeStyle = "#0f766e"; // Emerald-700
+      ctx.lineWidth = 14;
+      ctx.strokeRect(30, 30, W - 60, H - 60);
+
+      ctx.strokeStyle = "#d97706"; // Amber-600 gold accent
+      ctx.lineWidth = 3;
+      ctx.strokeRect(45, 45, W - 90, H - 90);
+
+      // Certificate Title
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#0f172a";
+      ctx.font = "bold 34px Prompt, sans-serif";
+      ctx.fillText("เกียรติบัตรฉบับนี้ให้ไว้เพื่อแสดงว่า", W / 2, 170);
+
+      // Recipient Name
+      ctx.fillStyle = "#047857";
+      ctx.font = "bold 56px Prompt, sans-serif";
+      ctx.fillText(reg.name, W / 2, 280);
+
+      // Organization
+      ctx.fillStyle = "#475569";
+      ctx.font = "30px Prompt, sans-serif";
+      ctx.fillText(reg.org, W / 2, 345);
+
+      // Body text
+      ctx.fillStyle = "#1e293b";
+      ctx.font = "28px Prompt, sans-serif";
+      ctx.fillText("ได้ผ่านการเข้าร่วม", W / 2, 420);
+
+      // Event Title
+      ctx.fillStyle = "#0f172a";
+      ctx.font = "bold 32px Prompt, sans-serif";
+      // Auto-wrap event title if long
+      const words = eventConfig.title.split(" ");
+      let line = "";
+      let y = 475;
+      for (let n = 0; n < words.length; n++) {
+        let testLine = line + words[n] + " ";
+        let metrics = ctx.measureText(testLine);
+        if (metrics.width > W - 180 && n > 0) {
+          ctx.fillText(line, W / 2, y);
+          line = words[n] + " ";
+          y += 42;
+        } else {
+          line = testLine;
+        }
+      }
+      ctx.fillText(line, W / 2, y);
+
+      // Date
+      ctx.fillStyle = "#64748b";
+      ctx.font = "24px Prompt, sans-serif";
+      ctx.fillText(`จัดขึ้น ณ วันที่ ${eventConfig.date}`, W / 2, y + 60);
+
+      // Signatures
+      const sigY = H - 150;
+      ctx.fillStyle = "#334155";
+      ctx.font = "22px Prompt, sans-serif";
+
+      // Left sign
+      ctx.fillText("(................................................)", W / 4 + 40, sigY);
+      ctx.fillText("ผู้รับผิดชอบโครงการ", W / 4 + 40, sigY + 35);
+      ctx.fillText("โรงพยาบาลหนองจิก", W / 4 + 40, sigY + 65);
+
+      // Right sign
+      ctx.fillText("(................................................)", (W * 3) / 4 - 40, sigY);
+      ctx.fillText("ประธานในพิธี / ผู้อำนวยการ", (W * 3) / 4 - 40, sigY + 35);
+      ctx.fillText("โรงพยาบาลหนองจิก", (W * 3) / 4 - 40, sigY + 65);
+
+      // Verification Tag
+      ctx.fillStyle = "#94a3b8";
+      ctx.font = "16px monospace";
+      ctx.textAlign = "left";
+      ctx.fillText(`Certificate ID: ${reg.id} | Check-in: ${reg.checkedInAt || "Verified"}`, 55, H - 45);
+    }
+
+    window.downloadCertImage = function() {
+      const canvas = document.getElementById("cert-preview-canvas");
+      if (!canvas || !currentCertAttendee) return;
+      const link = document.createElement("a");
+      link.download = `Certificate_${currentCertAttendee.name}_${currentCertAttendee.id}.png`;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    };
+
+    window.printCert = function() {
+      if (!currentCertAttendee) return;
+      setPrintPageOrientation("landscape");
+      document.body.classList.remove("print-mode-ticket", "print-mode-badge");
+      document.body.classList.add("print-mode-cert");
+      renderCertificateCanvas(currentCertAttendee);
+      setTimeout(() => {
+        window.print();
+      }, 150);
+    };
+
+    // ---------------- CSV Export ----------------
     window.exportCSV = function() {
       const headers = ["Ticket ID", "ชื่อ-นามสกุล", "หน่วยงาน", "เบอร์โทรศัพท์", "อีเมล", "รูปแบบการเข้าร่วม", "เวลาลงทะเบียน", "สถานะเช็กอิน", "เวลาเช็กอิน"];
       const rows = registrations.map(r => [
@@ -765,6 +1863,7 @@
       link.click();
     };
 
+    // ---------------- Tab Switching ----------------
     window.switchTab = function(tabName) {
       ["register", "checkin", "admin"].forEach(t => {
         document.getElementById(`view-${t}`).classList.toggle("hidden", t !== tabName);
@@ -776,7 +1875,21 @@
         }
       });
       document.getElementById("main-header")?.classList.remove("header-compact");
+
+      if (tabName === "admin" && isAdminLoggedIn) {
+        setTimeout(() => {
+          updateAdminCharts();
+          renderAdminTable();
+        }, 100);
+      }
     };
+
+    // Initialize sound toggle state from localStorage
+    const soundCheckbox = document.getElementById("sound-toggle");
+    if (soundCheckbox) {
+      soundCheckbox.checked = isSoundEnabled;
+      toggleSound(isSoundEnabled);
+    }
   </script>
 </body>
 </html>
