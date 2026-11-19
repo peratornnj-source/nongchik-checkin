@@ -45,9 +45,37 @@
       body.print-mode-ticket #printable-ticket, body.print-mode-ticket #printable-ticket * { visibility: visible; }
       body.print-mode-ticket #printable-ticket { position: absolute; left: 0; top: 0; width: 100%; max-width: 100%; box-shadow: none !important; border: 2px solid #cbd5e1 !important; }
 
-      /* Nametag / Badge Print (Portrait) */
-      body.print-mode-badge #printable-badge, body.print-mode-badge #printable-badge * { visibility: visible; }
-      body.print-mode-badge #printable-badge { position: absolute; left: 50%; top: 20px; transform: translateX(-50%); width: 90mm; min-height: 125mm; box-shadow: none !important; border: 2px dashed #94a3b8 !important; }
+      /* Nametag / Badge Print (Portrait A4 with 9x13 cm Center Placement) */
+      body.print-mode-badge {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      body.print-mode-badge #printable-badge,
+      body.print-mode-badge #printable-badge * {
+        visibility: visible !important;
+      }
+      body.print-mode-badge #printable-badge {
+        display: flex !important;
+        flex-direction: column !important;
+        position: absolute !important;
+        left: 50% !important;
+        top: 20mm !important;
+        transform: translateX(-50%) !important;
+        width: 90mm !important;
+        height: 130mm !important;
+        max-width: 90mm !important;
+        max-height: 130mm !important;
+        box-sizing: border-box !important;
+        border: 1.5px dashed #64748b !important;
+        border-radius: 14px !important;
+        background: #ffffff !important;
+        box-shadow: none !important;
+        page-break-after: avoid !important;
+        break-after: avoid !important;
+      }
 
       /* Certificate A4 Landscape Print (แนวนอน ขนาด A4 พอดีขอบกระดาษ ไม่ล้น ไม่เกิน) */
       body.print-mode-cert {
@@ -684,27 +712,41 @@
     <img id="printable-cert-img" alt="Certificate" />
   </div>
 
-  <!-- Printable Hidden Container for Name Badge (ป้ายคล้องคอ 9x13 cm) -->
-  <div id="printable-badge" class="hidden bg-white p-6 rounded-2xl border-2 border-slate-300 flex-col items-center justify-between text-center space-y-4">
-    <div class="w-full border-b-2 border-emerald-600 pb-2">
-      <p id="badge-event-title" class="text-xs font-semibold text-slate-700 line-clamp-2"></p>
-      <span class="inline-block mt-1 px-3 py-0.5 rounded-full text-[10px] font-bold uppercase bg-emerald-100 text-emerald-800" id="badge-tag-type">
-        ONSITE ATTENDEE
-      </span>
+  <!-- Printable Container for Name Badge (ป้ายคล้องคอ 9x13 cm) -->
+  <div id="printable-badge" class="hidden bg-white rounded-2xl flex flex-col justify-between text-center overflow-hidden border border-slate-300">
+    <!-- Hole Punch Guide (รอยเจาะรูสำหรับคล้องสาย) -->
+    <div class="w-full flex justify-center items-center gap-1.5 pt-2 pb-1 bg-slate-50 border-b border-dashed border-slate-200">
+      <div class="w-7 h-2 rounded-full border border-slate-400 bg-white" title="ตำแหน่งเจาะรูสายคล้อง"></div>
     </div>
 
-    <div class="my-auto py-2">
+    <!-- Badge Header (หัวป้ายพร้อมชื่องานและสังกัด) -->
+    <div class="bg-gradient-to-r from-emerald-800 to-teal-700 text-white p-3 space-y-1">
+      <p class="text-[10px] uppercase tracking-wider text-emerald-200 font-medium">โรงพยาบาลหนองจิก • EVENTPASS</p>
+      <h3 id="badge-event-title" class="font-bold text-xs leading-snug line-clamp-2 px-1 text-white"></h3>
+      <div class="pt-0.5">
+        <span id="badge-tag-type" class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-white text-emerald-800 shadow-sm">
+          ONSITE ATTENDEE
+        </span>
+      </div>
+    </div>
+
+    <!-- Badge Main Info: Name & Organization -->
+    <div class="my-auto py-3 px-4 space-y-1">
+      <p class="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">PARTICIPANT</p>
       <h2 id="badge-name" class="text-2xl font-bold text-slate-900 leading-tight"></h2>
-      <p id="badge-org" class="text-sm font-medium text-slate-600 mt-1"></p>
+      <p id="badge-org" class="text-sm font-semibold text-emerald-700 leading-normal"></p>
     </div>
 
-    <div class="flex flex-col items-center">
-      <div id="badge-qrcode" class="p-2 border border-slate-200 rounded-xl bg-white"></div>
-      <p id="badge-id" class="font-mono font-bold text-xs text-slate-500 mt-1.5"></p>
+    <!-- Badge Footer: QR Code & ID -->
+    <div class="bg-slate-50 p-2.5 pt-2 border-t border-slate-200 flex flex-col items-center space-y-1">
+      <div id="badge-qrcode" class="p-1 border border-slate-200 rounded-xl bg-white shadow-sm flex items-center justify-center"></div>
+      <p id="badge-id" class="font-mono font-bold text-xs text-slate-700 tracking-wider"></p>
+      <p class="text-[9px] text-slate-400">สแกน QR เพื่อเช็กอิน / ร่วมกิจกรรม</p>
     </div>
 
-    <div class="w-full border-t border-slate-200 pt-2 text-[10px] text-slate-400">
-      รพ.หนองจิก • EventPass Cloud
+    <!-- Cut Guide Label -->
+    <div class="bg-slate-100 py-1 text-[9px] text-slate-400 border-t border-dashed border-slate-300">
+      ✂️ ตัดตามรอยประ สำหรับซองป้ายคล้องคอ (ขนาด 9 × 13 ซม.)
     </div>
   </div>
 
@@ -1404,6 +1446,9 @@
           </td>
           <td class="py-2.5 px-2 text-right">
             <div class="flex items-center justify-end gap-1.5">
+              <button onclick="directPrintBadge('${r.id}')" title="พิมพ์ป้ายชื่อคล้องคอ (9x13 cm)" class="px-2 py-1 bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200 rounded-lg text-xs font-medium transition flex items-center gap-1">
+                🏷️ ป้าย
+              </button>
               <button onclick="openAdminQrModal('${r.id}')" title="เปิด QR Code บนหน้าจอให้สแกน" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg text-xs font-medium transition">
                 📱 QR
               </button>
@@ -1621,18 +1666,25 @@
     };
 
     function renderAndPrintBadge(reg) {
+      if (!reg) return;
       document.getElementById("badge-event-title").textContent = eventConfig.title;
       document.getElementById("badge-name").textContent = reg.name;
       document.getElementById("badge-org").textContent = reg.org;
       document.getElementById("badge-id").textContent = reg.id;
-      document.getElementById("badge-tag-type").textContent = reg.type && reg.type.includes("Online") ? "ONLINE PARTICIPANT" : "ONSITE ATTENDEE";
+
+      const isOnline = reg.type && reg.type.includes("Online");
+      const tagEl = document.getElementById("badge-tag-type");
+      tagEl.textContent = isOnline ? "ONLINE PARTICIPANT" : "ONSITE ATTENDEE";
+      tagEl.className = isOnline
+        ? "inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-blue-100 text-blue-800 shadow-sm"
+        : "inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-white text-emerald-800 shadow-sm";
 
       const badgeQr = document.getElementById("badge-qrcode");
       badgeQr.innerHTML = "";
       new QRCode(badgeQr, {
         text: reg.id,
-        width: 130,
-        height: 130,
+        width: 105,
+        height: 105,
         colorDark: "#0f172a",
         colorLight: "#ffffff",
         correctLevel: QRCode.CorrectLevel.H
@@ -1645,6 +1697,12 @@
         window.print();
       }, 300);
     }
+
+    window.directPrintBadge = function(id) {
+      const reg = registrations.find(r => r.id === id);
+      if (!reg) return;
+      renderAndPrintBadge(reg);
+    };
 
     // ---------------- Print Orientation & Sizing Controller ----------------
     function setPrintPageOrientation(orientation) {
