@@ -52,6 +52,9 @@
       body.print-mode-badge #admin-qr-modal,
       body.print-mode-badge #edit-attendee-modal,
       body.print-mode-badge #cert-modal,
+      body.print-mode-badge #standee-modal,
+      body.print-mode-badge #self-checkin-modal,
+      body.print-mode-badge #printable-standee,
       body.print-mode-badge #printable-cert {
         display: none !important;
       }
@@ -101,6 +104,9 @@
       body.print-mode-cert #admin-qr-modal,
       body.print-mode-cert #edit-attendee-modal,
       body.print-mode-cert #cert-modal,
+      body.print-mode-cert #standee-modal,
+      body.print-mode-cert #self-checkin-modal,
+      body.print-mode-cert #printable-standee,
       body.print-mode-cert #printable-badge {
         display: none !important;
       }
@@ -150,6 +156,56 @@
         border: none !important;
         box-shadow: none !important;
         object-fit: fill !important;
+      }
+
+      /* Entrance Standee / Poster A4 Portrait Print (ป้าย QR Code ตั้งหน้างาน A4 แนวตั้ง) */
+      body.print-mode-standee #main-header,
+      body.print-mode-standee main,
+      body.print-mode-standee #lookup-modal,
+      body.print-mode-standee #admin-qr-modal,
+      body.print-mode-standee #edit-attendee-modal,
+      body.print-mode-standee #cert-modal,
+      body.print-mode-standee #standee-modal,
+      body.print-mode-standee #self-checkin-modal,
+      body.print-mode-standee #printable-ticket,
+      body.print-mode-standee #printable-badge,
+      body.print-mode-standee #printable-cert {
+        display: none !important;
+      }
+      body.print-mode-standee {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      body.print-mode-standee #printable-standee,
+      body.print-mode-standee #printable-standee * {
+        visibility: visible !important;
+      }
+      body.print-mode-standee #printable-standee {
+        display: flex !important;
+        flex-direction: column !important;
+        position: static !important;
+        width: 190mm !important;
+        height: 275mm !important;
+        max-width: 190mm !important;
+        max-height: 275mm !important;
+        margin: 8mm auto !important;
+        box-sizing: border-box !important;
+        border: 3px solid #0f766e !important;
+        border-radius: 20px !important;
+        background: #ffffff !important;
+        overflow: hidden !important;
+        page-break-after: avoid !important;
+        page-break-inside: avoid !important;
+        break-after: avoid !important;
+        break-inside: avoid !important;
+      }
+      body.print-mode-standee #standee-print-qrcode img,
+      body.print-mode-standee #standee-print-qrcode canvas {
+        display: block !important;
+        margin: 0 auto !important;
       }
     }
   </style>
@@ -210,9 +266,14 @@
 
       <div class="flex flex-wrap justify-between items-center gap-3">
         <p class="text-xs text-slate-500">✨ กรอกข้อมูลเพื่อรับ E-Ticket QR Code สำหรับเข้างาน</p>
-        <button onclick="toggleLookupModal(true)" class="text-sm font-medium text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-4 py-2 rounded-xl border border-emerald-200 transition flex items-center gap-1.5">
-          <span>🔍</span> ค้นหาบัตรเข้างาน / QR Code เดิม
-        </button>
+        <div class="flex flex-wrap items-center gap-2">
+          <button onclick="openSelfCheckinModal()" class="text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 px-3.5 py-2 rounded-xl shadow-sm transition flex items-center gap-1.5">
+            <span>📍</span> เช็กอินเข้างานด้วยตนเอง
+          </button>
+          <button onclick="toggleLookupModal(true)" class="text-xs sm:text-sm font-medium text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-3.5 py-2 rounded-xl border border-emerald-200 transition flex items-center gap-1.5">
+            <span>🔍</span> ค้นหาบัตร / QR
+          </button>
+        </div>
       </div>
 
       <div id="register-form-card" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
@@ -338,17 +399,22 @@
         </div>
       </div>
 
-      <!-- แถบควบคุมเสียง & โหมดเครื่องสแกนบาร์โค้ด -->
+      <!-- แถบควบคุมเสียง & โหมดเครื่องสแกนบาร์โค้ด & ป้าย QR ตั้งหน้างาน -->
       <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
-        <div class="flex items-center gap-3">
+        <div class="flex flex-wrap items-center gap-4">
           <label class="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-700">
             <input type="checkbox" id="sound-toggle" checked onchange="toggleSound(this.checked)" class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300" />
             <span id="sound-toggle-label">🔊 เปิดเสียงตอบรับ (Beep Sound)</span>
           </label>
+          <div class="hidden sm:flex items-center gap-2 text-xs text-slate-500">
+            <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>รองรับปืนสแกนบาร์โค้ด USB/Bluetooth</span>
+          </div>
         </div>
-        <div class="flex items-center gap-2 text-xs text-slate-500">
-          <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span>รองรับปืนสแกนบาร์โค้ด USB/Bluetooth ยิงได้ทันที</span>
+        <div>
+          <button onclick="openStandeeModal()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white text-xs sm:text-sm font-semibold transition flex items-center gap-2 shadow-sm">
+            <span>🪧</span> ป้าย QR Code ตั้งหน้างาน (A4 Standee)
+          </button>
         </div>
       </div>
 
@@ -421,7 +487,10 @@
             <h2 class="text-lg font-bold text-slate-800">📊 แดชบอร์ดและจัดการระบบ</h2>
             <p class="text-xs text-slate-500">ควบคุมโครงการ, ตรวจสอบสถิติ, แสดงภาพ QR Code และพิมพ์ป้ายชื่อ</p>
           </div>
-          <div class="flex items-center gap-2">
+          <div class="flex flex-wrap items-center gap-2">
+            <button onclick="openStandeeModal()" class="px-3.5 py-2 rounded-xl bg-teal-700 hover:bg-teal-800 text-white text-xs sm:text-sm font-medium transition flex items-center gap-1.5 shadow-sm">
+              <span>🪧</span> ป้าย QR Code หน้างาน
+            </button>
             <button onclick="exportCSV()" class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-medium transition flex items-center gap-1.5">
               <span>📊</span> ดาวน์โหลด Excel (CSV)
             </button>
@@ -778,6 +847,185 @@
     </div>
   </div>
 
+  <!-- Modal 5: ป้าย QR Code หลักตั้งหน้างาน (Event Entrance Standee Modal) -->
+  <div id="standee-modal" class="hidden fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl my-8">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+        <div>
+          <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2">
+            <span>🪧</span> ป้าย QR Code เช็กอินหน้างาน (Standee A4)
+          </h3>
+          <p class="text-xs text-slate-500">สำหรับปรินต์ตั้งโต๊ะลงทะเบียน ให้ผู้เข้าร่วมใช้มือถือสแกนเช็กอินเอง</p>
+        </div>
+        <button onclick="closeStandeeModal()" class="text-slate-400 hover:text-slate-700 text-2xl leading-none">&times;</button>
+      </div>
+
+      <!-- กล่องจำลองป้ายหน้างาน (Preview Box) -->
+      <div class="bg-slate-50 border-2 border-dashed border-teal-500/40 rounded-2xl p-5 text-center space-y-3">
+        <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white font-bold text-lg mx-auto flex items-center justify-center shadow-md">QR</div>
+        <div>
+          <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full border border-emerald-300">
+            📍 จุดสแกนเช็กอินเข้างาน (SELF CHECK-IN)
+          </span>
+          <h4 id="standee-preview-title" class="font-bold text-base text-slate-900 mt-2 line-clamp-2 px-2"></h4>
+          <p id="standee-preview-date" class="text-xs text-slate-500 mt-0.5"></p>
+        </div>
+
+        <!-- QR Code ใหญ่ -->
+        <div class="p-3 bg-white border-2 border-slate-200 rounded-2xl shadow-inner inline-block mx-auto">
+          <div id="standee-modal-qrcode" class="flex items-center justify-center"></div>
+        </div>
+
+        <div class="space-y-1.5 bg-white p-3 rounded-xl border border-slate-200 text-left text-xs text-slate-600">
+          <p class="font-bold text-slate-800 text-center mb-1 text-sm">💡 ขั้นตอนการเช็กอินง่ายๆ 3 สเต็ป:</p>
+          <div class="flex items-start gap-2">
+            <span class="w-5 h-5 rounded-full bg-emerald-600 text-white text-[11px] font-bold flex items-center justify-center shrink-0">1</span>
+            <span>เปิดกล้องโทรศัพท์ หรือ แอป LINE ส่องสแกน QR Code นี้</span>
+          </div>
+          <div class="flex items-start gap-2">
+            <span class="w-5 h-5 rounded-full bg-emerald-600 text-white text-[11px] font-bold flex items-center justify-center shrink-0">2</span>
+            <span>พิมพ์เบอร์โทรศัพท์ หรือ ชื่อ-นามสกุล ของท่าน</span>
+          </div>
+          <div class="flex items-start gap-2">
+            <span class="w-5 h-5 rounded-full bg-emerald-600 text-white text-[11px] font-bold flex items-center justify-center shrink-0">3</span>
+            <span>แตะปุ่ม <b>"ยืนยันเช็กอิน"</b> พร้อมรับเกียรติบัตรออนไลน์</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap justify-between items-center gap-2 pt-2 border-t border-slate-100">
+        <button onclick="copySelfCheckinLink()" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium transition flex items-center gap-1.5">
+          <span>🔗</span> ก๊อปลิงก์จุดเช็กอิน
+        </button>
+        <div class="flex gap-2">
+          <button onclick="downloadStandeeQr()" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium transition flex items-center gap-1.5">
+            <span>📥</span> โหลดรูป QR
+          </button>
+          <button onclick="printStandee()" class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 shadow-sm">
+            <span>🖨️</span> สั่งพิมพ์ป้ายขนาด A4
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 6: จุดเช็กอินตนเองของผู้เข้าร่วม (Self Check-in Modal for Attendees) -->
+  <div id="self-checkin-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl my-auto relative">
+      <button onclick="closeSelfCheckinModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-2xl leading-none">&times;</button>
+
+      <!-- หัวข้อ -->
+      <div class="text-center space-y-1.5 pt-2">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white font-bold text-xl mx-auto flex items-center justify-center shadow-md">
+          📍
+        </div>
+        <span class="inline-block px-3 py-0.5 rounded-full text-xs font-bold uppercase bg-emerald-100 text-emerald-800 border border-emerald-300">
+          เช็กอินเข้าร่วมงานด้วยตนเอง
+        </span>
+        <h3 id="self-checkin-event-title" class="font-bold text-base text-slate-900 leading-snug px-2"></h3>
+        <p id="self-checkin-event-date" class="text-xs text-slate-500"></p>
+      </div>
+
+      <!-- ช่องค้นหาด่วน -->
+      <div class="space-y-1.5 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+        <label class="block text-xs font-semibold text-slate-700">📱 กรอกเบอร์โทรศัพท์ หรือ ชื่อ-นามสกุล ของท่าน:</label>
+        <div class="relative">
+          <input type="text" id="self-checkin-query" oninput="handleSelfCheckinLiveSearch()" placeholder="เช่น 0812345678 หรือ สมชาย" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 outline-none text-base font-medium shadow-inner" autocomplete="off" />
+          <span class="absolute right-3.5 top-3.5 text-slate-400 text-lg">🔍</span>
+        </div>
+        <p class="text-[11px] text-slate-400">พิมพ์เพียงบางส่วนของเบอร์หรือชื่อ รายชื่อจะปรากฏขึ้นมาทันที</p>
+      </div>
+
+      <!-- ผลการค้นหา & การ์ดยืนยันเช็กอิน -->
+      <div id="self-checkin-results-area" class="space-y-2.5 max-h-72 overflow-y-auto">
+        <div class="text-center py-6 text-slate-400 text-sm">
+          พิมพ์เบอร์โทร หรือ ชื่อ เพื่อเริ่มเช็กอิน
+        </div>
+      </div>
+
+      <!-- การ์ดเช็กอินสำเร็จ (Success Feedback Card) -->
+      <div id="self-checkin-success-box" class="hidden bg-emerald-50 border-2 border-emerald-500 p-5 rounded-2xl text-center space-y-3">
+        <div class="text-4xl animate-bounce">🎉</div>
+        <h4 class="font-bold text-lg text-emerald-900">เช็กอินสำเร็จเรียบร้อยแล้ว!</h4>
+        <p class="text-xs text-emerald-700">ยินดีต้อนรับเข้าสู่งาน ขอให้ท่านได้รับความรู้และประสบการณ์ที่ดีครับ</p>
+        <div class="bg-white p-3 rounded-xl border border-emerald-200 text-sm text-slate-800 space-y-1">
+          <p><span class="text-slate-500 text-xs">ผู้เข้าร่วม:</span> <b id="self-success-name"></b></p>
+          <p><span class="text-slate-500 text-xs">หน่วยงาน:</span> <span id="self-success-org"></span></p>
+          <p><span class="text-slate-500 text-xs">เวลาเช็กอิน:</span> <b id="self-success-time" class="text-emerald-700"></b></p>
+        </div>
+        <div class="grid grid-cols-2 gap-2 pt-1">
+          <button id="btn-self-success-ticket" class="py-2.5 px-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-medium transition flex items-center justify-center gap-1">
+            <span>🎫</span> ดูบัตร E-Ticket
+          </button>
+          <button id="btn-self-success-cert" class="py-2.5 px-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-medium transition flex items-center justify-center gap-1">
+            <span>🎓</span> รับเกียรติบัตร
+          </button>
+        </div>
+      </div>
+
+      <!-- ปุ่มไปลงทะเบียนสำหรับคนยังไม่มีชื่อ (Walk-in) -->
+      <div class="pt-2 border-t border-slate-100 text-center">
+        <p class="text-xs text-slate-500 mb-2">ยังไม่ได้ลงทะเบียนล่วงหน้า หรือค้นหาชื่อไม่พบ?</p>
+        <button onclick="goToWalkinRegistration()" class="w-full py-2.5 px-4 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-1.5">
+          <span>📝</span> แตะที่นี่เพื่อลงทะเบียนเข้างานทันที
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Printable Container for Entrance Standee (ป้ายตั้งโต๊ะ A4 แนวตั้ง) -->
+  <div id="printable-standee" class="hidden bg-white p-8 rounded-3xl flex flex-col justify-between items-center text-center space-y-6">
+    <!-- Standee Top Header -->
+    <div class="w-full space-y-2 border-b-2 border-slate-100 pb-4">
+      <div class="flex items-center justify-center gap-3">
+        <div class="w-12 h-12 rounded-2xl bg-emerald-600 text-white font-bold text-2xl flex items-center justify-center">QR</div>
+        <div class="text-left">
+          <h2 class="text-lg font-bold text-slate-900 leading-tight">โรงพยาบาลหนองจิก</h2>
+          <p class="text-xs text-emerald-700 font-semibold tracking-wider">EVENTPASS CLOUD SYSTEM</p>
+        </div>
+      </div>
+      <div class="pt-2">
+        <span class="inline-block px-5 py-1.5 rounded-full text-base font-extrabold uppercase bg-emerald-600 text-white shadow-sm tracking-wide">
+          📍 จุดสแกนเช็กอินเข้างาน (SELF CHECK-IN)
+        </span>
+      </div>
+      <h1 id="standee-print-title" class="text-xl font-bold text-slate-900 mt-2 leading-snug"></h1>
+      <p id="standee-print-date" class="text-sm font-medium text-slate-500"></p>
+      <p id="standee-print-location" class="text-xs text-slate-400"></p>
+    </div>
+
+    <!-- Standee Big QR Code Container -->
+    <div class="my-auto py-4 flex flex-col items-center">
+      <div class="p-5 bg-white border-4 border-emerald-600 rounded-3xl shadow-lg inline-block">
+        <div id="standee-print-qrcode"></div>
+      </div>
+      <p class="font-mono text-xs text-slate-400 mt-3 font-semibold tracking-widest uppercase">SCAN WITH SMARTPHONE CAMERA OR LINE</p>
+    </div>
+
+    <!-- Standee Instructions -->
+    <div class="w-full bg-slate-50 p-5 rounded-2xl border-2 border-slate-200 text-left space-y-2.5">
+      <p class="font-bold text-sm text-slate-800 text-center mb-1">ขั้นตอนการสแกนเช็กอิน:</p>
+      <div class="flex items-center gap-3">
+        <span class="w-7 h-7 rounded-full bg-emerald-600 text-white text-sm font-bold flex items-center justify-center shrink-0">1</span>
+        <span class="text-sm text-slate-700">เปิด<b>กล้องโทรศัพท์</b> หรือ <b>แอป LINE</b> แล้วส่องสแกน QR Code นี้</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="w-7 h-7 rounded-full bg-emerald-600 text-white text-sm font-bold flex items-center justify-center shrink-0">2</span>
+        <span class="text-sm text-slate-700">พิมพ์<b>เบอร์โทรศัพท์</b> หรือ <b>ชื่อ-นามสกุล</b> ของท่าน</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="w-7 h-7 rounded-full bg-emerald-600 text-white text-sm font-bold flex items-center justify-center shrink-0">3</span>
+        <span class="text-sm text-slate-700">แตะปุ่ม <b>"ยืนยันเช็กอิน"</b> พร้อมรับบัตร E-Ticket และเกียรติบัตรออนไลน์</span>
+      </div>
+    </div>
+
+    <!-- Standee Footer -->
+    <div class="w-full pt-3 border-t border-slate-200 flex justify-between items-center text-xs text-slate-400">
+      <span>ระบบเช็กอินออนไลน์ โรงพยาบาลหนองจิก</span>
+      <span id="standee-print-url" class="font-mono text-emerald-700 font-semibold"></span>
+    </div>
+  </div>
+
   <!-- ==================== FIREBASE SDK & APP LOGIC ==================== -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
@@ -1001,14 +1249,32 @@
 
       // Check URL parameters for direct ticket view on initial load
       checkUrlTicketParam();
+
+      // If self check-in modal is active, refresh live search results
+      const selfModal = document.getElementById("self-checkin-modal");
+      if (selfModal && !selfModal.classList.contains("hidden")) {
+        if (typeof handleSelfCheckinLiveSearch === "function") {
+          handleSelfCheckinLiveSearch();
+        }
+      }
     });
 
-    // ---------------- URL Deep Linking for Tickets (?ticket=REG-XXXX or ?id=REG-XXXX) ----------------
+    // ---------------- URL Deep Linking for Tickets & Self Check-in ----------------
     let hasCheckedUrlParam = false;
     function checkUrlTicketParam() {
-      if (hasCheckedUrlParam || registrations.length === 0) return;
-      hasCheckedUrlParam = true;
+      if (hasCheckedUrlParam) return;
       const params = new URLSearchParams(window.location.search);
+      const isCheckinParam = params.get("checkin");
+      if (isCheckinParam === "true" || isCheckinParam === "1") {
+        hasCheckedUrlParam = true;
+        setTimeout(() => {
+          openSelfCheckinModal();
+        }, 200);
+        return;
+      }
+
+      if (registrations.length === 0) return;
+      hasCheckedUrlParam = true;
       const ticketParam = params.get("ticket") || params.get("id");
       if (ticketParam) {
         const found = registrations.find(r => r.id.toUpperCase() === ticketParam.trim().toUpperCase());
@@ -1018,6 +1284,8 @@
         }
       }
     }
+    // Check URL params on initial script run (e.g. ?checkin=true)
+    checkUrlTicketParam();
 
     // ---------------- UI Update ----------------
     function updateEventUI() {
@@ -1101,6 +1369,8 @@
         }
       }
     }
+    // Check URL params on initial script run (e.g. ?checkin=true)
+    checkUrlTicketParam();
 
     // ---------------- Registration Handler ----------------
     window.handleRegister = async function(e) {
@@ -1783,7 +2053,7 @@
     }
 
     window.addEventListener("afterprint", () => {
-      document.body.classList.remove("print-mode-cert", "print-mode-ticket", "print-mode-badge");
+      document.body.classList.remove("print-mode-cert", "print-mode-ticket", "print-mode-badge", "print-mode-standee");
       clearPrintPageOrientation();
     });
 
@@ -1796,10 +2066,300 @@
           certImg.src = canvas.toDataURL("image/png");
         }
         setPrintPageOrientation("landscape");
-        document.body.classList.remove("print-mode-ticket", "print-mode-badge");
+        document.body.classList.remove("print-mode-ticket", "print-mode-badge", "print-mode-standee");
         document.body.classList.add("print-mode-cert");
       }
     });
+
+    // ---------------- Entrance Standee (ป้าย QR Code ตั้งหน้างาน A4) ----------------
+    function getSelfCheckinUrl() {
+      const url = new URL(window.location.href);
+      url.search = "?checkin=true";
+      url.hash = "";
+      return url.toString();
+    }
+
+    window.openStandeeModal = function() {
+      const standeeModal = document.getElementById("standee-modal");
+      if (!standeeModal) return;
+
+      document.getElementById("standee-preview-title").textContent = eventConfig.title || "โครงการอบรมเชิงปฏิบัติการ";
+      document.getElementById("standee-preview-date").textContent = `📅 ${eventConfig.date || ""}`;
+
+      const targetUrl = getSelfCheckinUrl();
+      const qrEl = document.getElementById("standee-modal-qrcode");
+      qrEl.innerHTML = "";
+      new QRCode(qrEl, {
+        text: targetUrl,
+        width: 170,
+        height: 170,
+        colorDark: "#064e3b",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+      });
+
+      standeeModal.classList.remove("hidden");
+    };
+
+    window.closeStandeeModal = function() {
+      const standeeModal = document.getElementById("standee-modal");
+      if (standeeModal) standeeModal.classList.add("hidden");
+    };
+
+    window.copySelfCheckinLink = function() {
+      const url = getSelfCheckinUrl();
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(() => {
+          alert("คัดลอกลิงก์จุดเช็กอินสำเร็จ:\n" + url);
+        }).catch(() => {
+          prompt("คัดลอกลิงก์นี้:", url);
+        });
+      } else {
+        prompt("คัดลอกลิงก์นี้:", url);
+      }
+    };
+
+    window.downloadStandeeQr = function() {
+      const qrContainer = document.getElementById("standee-modal-qrcode");
+      const img = qrContainer.querySelector("img");
+      const canvas = qrContainer.querySelector("canvas");
+      let dataUrl = "";
+      if (img && img.src && img.src.startsWith("data:image")) {
+        dataUrl = img.src;
+      } else if (canvas) {
+        dataUrl = canvas.toDataURL("image/png");
+      }
+      if (!dataUrl) {
+        alert("ไม่สามารถบันทึกภาพได้");
+        return;
+      }
+      const link = document.createElement("a");
+      link.download = `checkin-standee-qr-${Date.now()}.png`;
+      link.href = dataUrl;
+      link.click();
+    };
+
+    window.printStandee = function() {
+      const printTitle = document.getElementById("standee-print-title");
+      const printDate = document.getElementById("standee-print-date");
+      const printLocation = document.getElementById("standee-print-location");
+      const printUrl = document.getElementById("standee-print-url");
+      const printQr = document.getElementById("standee-print-qrcode");
+
+      const targetUrl = getSelfCheckinUrl();
+
+      if (printTitle) printTitle.textContent = eventConfig.title || "โครงการอบรมเชิงปฏิบัติการ";
+      if (printDate) printDate.textContent = `📅 วันที่: ${eventConfig.date || "-"}`;
+      if (printLocation) printLocation.textContent = `📍 สถานที่: ${eventConfig.location || "-"}`;
+      if (printUrl) printUrl.textContent = targetUrl;
+
+      if (printQr) {
+        printQr.innerHTML = "";
+        new QRCode(printQr, {
+          text: targetUrl,
+          width: 260,
+          height: 260,
+          colorDark: "#064e3b",
+          colorLight: "#ffffff",
+          correctLevel: QRCode.CorrectLevel.H
+        });
+      }
+
+      setPrintPageOrientation("portrait");
+      document.body.classList.remove("print-mode-cert", "print-mode-ticket", "print-mode-badge");
+      document.body.classList.add("print-mode-standee");
+
+      setTimeout(() => {
+        window.print();
+      }, 350);
+    };
+
+    // ---------------- Self Check-in Modal (ผู้เข้าร่วมสแกนแล้วเช็กอินด้วยตนเอง) ----------------
+    window.openSelfCheckinModal = function() {
+      const modal = document.getElementById("self-checkin-modal");
+      if (!modal) return;
+
+      document.getElementById("self-checkin-event-title").textContent = eventConfig.title || "โครงการอบรม";
+      document.getElementById("self-checkin-event-date").textContent = `📅 ${eventConfig.date || ""}`;
+
+      const queryInput = document.getElementById("self-checkin-query");
+      if (queryInput) {
+        queryInput.value = "";
+      }
+
+      const resultsArea = document.getElementById("self-checkin-results-area");
+      if (resultsArea) {
+        resultsArea.innerHTML = `
+          <div class="text-center py-6 text-slate-400 text-sm">
+            พิมพ์เบอร์โทร หรือ ชื่อ เพื่อเริ่มเช็กอิน
+          </div>
+        `;
+      }
+
+      const successBox = document.getElementById("self-checkin-success-box");
+      if (successBox) successBox.classList.add("hidden");
+
+      modal.classList.remove("hidden");
+      setTimeout(() => {
+        if (queryInput) queryInput.focus();
+      }, 150);
+    };
+
+    window.closeSelfCheckinModal = function() {
+      const modal = document.getElementById("self-checkin-modal");
+      if (modal) modal.classList.add("hidden");
+    };
+
+    window.handleSelfCheckinLiveSearch = function() {
+      const queryInput = document.getElementById("self-checkin-query");
+      const resultsArea = document.getElementById("self-checkin-results-area");
+      if (!queryInput || !resultsArea) return;
+
+      const q = queryInput.value.trim().toLowerCase();
+      if (!q) {
+        resultsArea.innerHTML = `
+          <div class="text-center py-6 text-slate-400 text-sm">
+            พิมพ์เบอร์โทร หรือ ชื่อ เพื่อเริ่มเช็กอิน
+          </div>
+        `;
+        return;
+      }
+
+      const matches = registrations.filter(r => {
+        const nameMatch = (r.name || "").toLowerCase().includes(q);
+        const phoneMatch = (r.phone || "").replace(/[^0-9]/g, "").includes(q.replace(/[^0-9]/g, "")) && q.replace(/[^0-9]/g, "").length >= 3;
+        const idMatch = (r.id || "").toLowerCase().includes(q);
+        const orgMatch = (r.org || "").toLowerCase().includes(q);
+        return nameMatch || phoneMatch || idMatch || orgMatch;
+      });
+
+      if (matches.length === 0) {
+        resultsArea.innerHTML = `
+          <div class="p-4 bg-amber-50 rounded-2xl border border-amber-200 text-center space-y-2">
+            <p class="text-xs text-amber-800 font-semibold">❌ ไม่พบข้อมูล "${q}" ในรายชื่อลงทะเบียน</p>
+            <p class="text-[11px] text-amber-700">ท่านอาจจะยังไม่ได้ลงทะเบียนล่วงหน้า หรือสะกดชื่อต่างกัน</p>
+            <button onclick="goToWalkinRegistration()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm transition">
+              📝 กดลงทะเบียนทันที (Walk-in)
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      resultsArea.innerHTML = matches.map(r => {
+        if (r.checkedIn) {
+          const timeStr = r.checkInTime ? new Date(r.checkInTime).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }) : "-";
+          return `
+            <div class="p-3.5 bg-emerald-50/70 border border-emerald-300 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+              <div>
+                <div class="flex items-center gap-1.5">
+                  <span class="font-bold text-sm text-slate-900">${r.name}</span>
+                  <span class="text-[11px] bg-emerald-600 text-white font-bold px-2 py-0.5 rounded-full">✓ เช็กอินแล้ว (${timeStr} น.)</span>
+                </div>
+                <p class="text-xs text-slate-500">${r.org || "-"} • 📞 ${r.phone || "-"} • <span class="font-mono">${r.id}</span></p>
+              </div>
+              <div class="flex gap-1.5 w-full sm:w-auto">
+                <button onclick="viewSelfTicket('${r.id}')" class="flex-1 sm:flex-none px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-medium transition">
+                  🎫 บัตร
+                </button>
+                <button onclick="viewSelfCert('${r.id}')" class="flex-1 sm:flex-none px-2.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-medium transition">
+                  🎓 เกียรติบัตร
+                </button>
+              </div>
+            </div>
+          `;
+        } else {
+          return `
+            <div class="p-3.5 bg-white border-2 border-emerald-400 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 shadow-sm">
+              <div>
+                <span class="font-bold text-base text-slate-900">${r.name}</span>
+                <p class="text-xs text-slate-600">${r.org || "-"} • 📞 ${r.phone || "-"} • <span class="font-mono text-emerald-800 font-semibold">${r.id}</span></p>
+              </div>
+              <button onclick="confirmSelfCheckin('${r.id}')" class="w-full sm:w-auto px-4 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold rounded-xl text-xs sm:text-sm shadow-md transition flex items-center justify-center gap-1.5">
+                <span>✅</span> ยืนยันเช็กอิน
+              </button>
+            </div>
+          `;
+        }
+      }).join("");
+    };
+
+    window.confirmSelfCheckin = async function(id) {
+      const reg = registrations.find(r => r.id === id);
+      if (!reg) return;
+
+      if (reg.checkedIn) {
+        alert("ท่านได้เช็กอินเข้างานเรียบร้อยแล้วครับ");
+        return;
+      }
+
+      try {
+        const checkInTime = new Date().toISOString();
+        await updateDoc(doc(db, "registrations", reg.id), {
+          checkedIn: true,
+          checkInTime: checkInTime
+        });
+
+        playBeep();
+
+        // Update local object immediately
+        reg.checkedIn = true;
+        reg.checkInTime = checkInTime;
+
+        // Show Success Feedback Box
+        const successBox = document.getElementById("self-checkin-success-box");
+        if (successBox) {
+          document.getElementById("self-success-name").textContent = reg.name;
+          document.getElementById("self-success-org").textContent = reg.org || "-";
+          const timeFmt = new Date(checkInTime).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
+          document.getElementById("self-success-time").textContent = `${timeFmt} น.`;
+
+          const btnTicket = document.getElementById("btn-self-success-ticket");
+          if (btnTicket) {
+            btnTicket.onclick = () => viewSelfTicket(reg.id);
+          }
+          const btnCert = document.getElementById("btn-self-success-cert");
+          if (btnCert) {
+            btnCert.onclick = () => viewSelfCert(reg.id);
+          }
+
+          successBox.classList.remove("hidden");
+        }
+
+        // Re-render search list to reflect checked-in status
+        handleSelfCheckinLiveSearch();
+
+      } catch (err) {
+        console.error("Self check-in error:", err);
+        alert("เกิดข้อผิดพลาดในการเช็กอิน กรุณาลองใหม่อีกครั้ง หรือติดต่อเจ้าหน้าที่หน้างานครับ");
+      }
+    };
+
+    window.viewSelfTicket = function(id) {
+      const reg = registrations.find(r => r.id === id);
+      if (!reg) return;
+      closeSelfCheckinModal();
+      switchTab("register");
+      showTicket(reg);
+    };
+
+    window.viewSelfCert = function(id) {
+      const reg = registrations.find(r => r.id === id);
+      if (!reg) return;
+      closeSelfCheckinModal();
+      openCertificateModal(reg);
+    };
+
+    window.goToWalkinRegistration = function() {
+      closeSelfCheckinModal();
+      closeStandeeModal();
+      switchTab("register");
+      const nameInput = document.getElementById("reg-name");
+      if (nameInput) {
+        nameInput.focus();
+        nameInput.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    };
 
     // ---------------- E-Certificate (วุฒิบัตร / เกียรติบัตรออนไลน์) ----------------
     let currentCertAttendee = null;
