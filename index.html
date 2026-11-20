@@ -45,6 +45,17 @@
       body.print-mode-ticket #printable-ticket, body.print-mode-ticket #printable-ticket * { visibility: visible; }
       body.print-mode-ticket #printable-ticket { position: absolute; left: 0; top: 0; width: 100%; max-width: 100%; box-shadow: none !important; border: 2px solid #cbd5e1 !important; }
 
+      /* When printing badge: hide all other main page contents from layout completely */
+      body.print-mode-badge #main-header,
+      body.print-mode-badge main,
+      body.print-mode-badge #lookup-modal,
+      body.print-mode-badge #admin-qr-modal,
+      body.print-mode-badge #edit-attendee-modal,
+      body.print-mode-badge #cert-modal,
+      body.print-mode-badge #printable-cert {
+        display: none !important;
+      }
+
       /* Nametag / Badge Print (Portrait A4 with 9x13 cm Center Placement) */
       body.print-mode-badge {
         margin: 0 !important;
@@ -60,21 +71,38 @@
       body.print-mode-badge #printable-badge {
         display: flex !important;
         flex-direction: column !important;
-        position: absolute !important;
-        left: 50% !important;
-        top: 20mm !important;
-        transform: translateX(-50%) !important;
+        position: static !important;
         width: 90mm !important;
         height: 130mm !important;
         max-width: 90mm !important;
         max-height: 130mm !important;
+        margin: 25mm auto 0 auto !important;
         box-sizing: border-box !important;
-        border: 1.5px dashed #64748b !important;
+        border: 1.5px dashed #475569 !important;
         border-radius: 14px !important;
         background: #ffffff !important;
         box-shadow: none !important;
+        overflow: hidden !important;
         page-break-after: avoid !important;
+        page-break-inside: avoid !important;
         break-after: avoid !important;
+        break-inside: avoid !important;
+      }
+      body.print-mode-badge #badge-qrcode img,
+      body.print-mode-badge #badge-qrcode canvas {
+        display: block !important;
+        margin: 0 auto !important;
+      }
+
+      /* When printing cert: hide all other elements from layout completely */
+      body.print-mode-cert #main-header,
+      body.print-mode-cert main,
+      body.print-mode-cert #lookup-modal,
+      body.print-mode-cert #admin-qr-modal,
+      body.print-mode-cert #edit-attendee-modal,
+      body.print-mode-cert #cert-modal,
+      body.print-mode-cert #printable-badge {
+        display: none !important;
       }
 
       /* Certificate A4 Landscape Print (แนวนอน ขนาด A4 พอดีขอบกระดาษ ไม่ล้น ไม่เกิน) */
@@ -1732,15 +1760,15 @@
         styleEl.textContent = `
           @page {
             size: A4 portrait;
-            margin: 10mm;
+            margin: 0mm;
           }
           @media print {
             html, body {
-              width: 100% !important;
-              height: auto !important;
+              width: 210mm !important;
+              height: 297mm !important;
               margin: 0 !important;
               padding: 0 !important;
-              overflow: visible !important;
+              overflow: hidden !important;
             }
           }
         `;
